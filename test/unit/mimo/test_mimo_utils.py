@@ -270,6 +270,16 @@ class TestWhitenChannel:
         gram0 = hw0.mH @ hw0
         tol = 7e-5 if precision == "single" else 1e-11
 
+        # Independent arithmetic path: compare whitening against direct
+        # covariance solves rather than using whitening as its own oracle.
+        residual = y.unsqueeze(0) - symbols @ h.T
+        direct_d = (
+            residual.conj() * torch.linalg.solve(s, residual.T).T
+        ).sum(dim=-1).real
+        direct_gram = h.mH @ torch.linalg.solve(s, h)
+        torch.testing.assert_close(d0, direct_d, rtol=0, atol=tol)
+        torch.testing.assert_close(gram0, direct_gram, rtol=0, atol=tol)
+
         for transform in (w, w2 @ w):
             yp = transform @ y
             hp = transform @ h
