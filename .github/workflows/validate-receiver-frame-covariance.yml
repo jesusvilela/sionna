@@ -1,0 +1,50 @@
+name: Validate receiver-frame covariance (CPU)
+
+on:
+  push:
+    branches:
+      - ci/sionna-frame-covariance-validation-2026-11-12
+  pull_request:
+    branches:
+      - main
+    paths:
+      - test/unit/mimo/test_mimo_utils.py
+      - .github/workflows/validate-receiver-frame-covariance.yml
+
+permissions:
+  contents: read
+
+jobs:
+  cpu:
+    name: Sionna PHY MIMO whitening tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONPATH: src
+      SIONNA_DEVICE: cpu
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: CPU PyTorch and PHY dependencies
+        run: |
+          python -m pip install --disable-pip-version-check --no-cache-dir \
+            torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install --disable-pip-version-check --no-cache-dir \
+            "numpy>=2.2.6" "scipy>=1.15.3" "h5py>=3.15.1" \
+            "matplotlib>=3.10.8" "importlib-resources>=6.5.2" pytest
+      - name: Print exact source and dependencies
+        run: |
+          git rev-parse HEAD
+          python -c 'import sys, torch, numpy; print(sys.version); print(torch.__version__); print(numpy.__version__)'
+      - name: Exercise actual checkout imports and targeted whitening regressions
+        run: |
+          python -m pytest test/unit/mimo/test_mimo_utils.py \
+            --device=cpu \
+            -k 'receiver_frame_preserves_noise_weighted_distances or test_whiten_channel_identity_covariance or test_whiten_channel_return_s_false' \
+            -q
