@@ -48,3 +48,9 @@ jobs:
             --device=cpu \
             -k 'receiver_frame_preserves_noise_weighted_distances or test_whiten_channel_identity_covariance or test_whiten_channel_return_s_false' \
             -q
+      - name: Check source syntax
+        run: |
+          python -m compileall -q src/sionna/phy/mimo/utils.py test/unit/mimo/test_mimo_utils.py
+      - name: Run complete MIMO utilities module on CPU
+        run: |
+          python -m pytest test/unit/mimo/test_mimo_utils.py --device=cpu -q
