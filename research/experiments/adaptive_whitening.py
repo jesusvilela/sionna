@@ -70,33 +70,14 @@ def _exponent_policy(s: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
     return exponent, applied
 
 
-def power2_whiten_channel(
+def _power2_core(
     y: torch.Tensor,
     h: torch.Tensor,
     s: torch.Tensor,
-    *,
-    adaptive: bool = True,
-    return_s: bool = False,
-    return_diagnostics: bool = False,
-) -> tuple[Any, ...]:
-    """Research candidate for covariance whitening using binary exponent scaling.
-
-    If adaptive is True, ordinary-normal-range covariance matrices use exponent
-    zero; subnormal and top-bin matrices are scaled into a safe range. If
-    adaptive is False, every covariance is normalized to a unit exponent
-    interval, providing an always-normalized comparison.
-
-    No tensor-to-host scalar conversion or data-dependent Python branch is used.
-    """
-    raw_exponent, applied_exponent = _exponent_policy(s)
-    if not adaptive:
-        applied_exponent = raw_exponent
-
-    # S = 2**e * S_unit. ldexp acts separately on real/imaginary components.
-    s_exp = -applied_exponent[..., None, None]
-    s_unit = _ldexp_tensor(s, s_exp)
-
-    # Broadcast the covariance exponent to the combined y/H batch shape.
+    applied_exponent: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Scale covariance and data using a preselected exponent."""
+    s_unit = _ldexp_tensor(s, -applied_exponent[..., None, None])
     batch_shape = torch.broadcast_shapes(
         tuple(s.shape[:-2]), tuple(h.shape[:-2]), tuple(y.shape[:-1])
     )
@@ -104,7 +85,6 @@ def power2_whiten_channel(
     half_exp = torch.div(exponent, 2, rounding_mode="floor")
     odd_exp = exponent - 2 * half_exp
 
-    # 2**(-e/2) = 2**(-floor(e/2)) / sqrt(2)**odd_exp.
     data_exp = -half_exp
     y_scaled = _ldexp_tensor(y, data_exp[..., None])
     h_scaled = _ldexp_tensor(h, data_exp[..., None, None])
@@ -121,7 +101,24 @@ def power2_whiten_channel(
     l_inv = inv_cholesky(s_unit)
     yw = (l_inv @ y_scaled.unsqueeze(-1)).squeeze(-1)
     hw = l_inv @ h_scaled
+    return yw, hw
 
+
+def power2_whiten_channel(
+    y: torch.Tensor,
+    h: torch.Tensor,
+    s: torch.Tensor,
+    *,
+    adaptive: bool = True,
+    return_s: bool = False,
+    return_diagnostics: bool = False,
+) -> tuple[Any, ...]:
+    """Research candidate using tensor-only binary exponent scaling."""
+    raw_exponent, applied_exponent = _exponent_policy(s)
+    if not adaptive:
+        applied_exponent = raw_exponent
+
+    yw, hw = _power2_core(y, h, s, applied_exponent)
     outputs: tuple[Any, ...]
     if return_s:
         m = s.shape[-1]
@@ -133,12 +130,38 @@ def power2_whiten_channel(
         outputs = (yw, hw)
 
     if return_diagnostics:
-        diagnostics = {
+        outputs = outputs + ({
             "raw_exponent": raw_exponent,
             "applied_exponent": applied_exponent,
-        }
-        outputs = outputs + (diagnostics,)
+        },)
     return outputs
+
+
+def _conditional_scaled_branch(y, h, s, applied_exponent):
+    return _power2_core(y, h, s, applied_exponent)
+
+
+def _conditional_baseline_branch(y, h, s, applied_exponent):
+    return baseline_whiten_channel(y, h, s, return_s=False)
+
+
+def conditional_power2_whiten_channel(
+    y: torch.Tensor, h: torch.Tensor, s: torch.Tensor
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Use torch.cond to retain the exact production path for normal-range S.
+
+    The predicate is a device tensor. No item(), host synchronization, or
+    Python data-dependent branch is used; the scaled branch is entered only
+    when at least one covariance in the batch is outside the normal range.
+    """
+    _, applied_exponent = _exponent_policy(s)
+    predicate = torch.any(applied_exponent != 0)
+    return torch.cond(
+        predicate,
+        _conditional_scaled_branch,
+        _conditional_baseline_branch,
+        (y, h, s, applied_exponent),
+    )
 
 
 def _benchmark_once(fn, y, h, s, warmup: int, repeats: int, loops: int) -> dict:
@@ -174,6 +197,9 @@ def run_benchmarks() -> dict:
                 ),
                 "adaptive_power2": _benchmark_once(
                     power2_whiten_channel, y, h, s, 10, 5, 40
+                ),
+                "conditional_power2": _benchmark_once(
+                    conditional_power2_whiten_channel, y, h, s, 10, 5, 40
                 ),
                 "always_power2": _benchmark_once(
                     lambda yy, hh, ss: power2_whiten_channel(
