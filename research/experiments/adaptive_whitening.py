@@ -278,48 +278,12 @@ def run_benchmarks() -> dict:
                     y, h, s, 10, 5, 40,
                 ),
             }
-    # Compile the conditional branch once, then benchmark both its normal
-    # fast path and its subnormal scaling path against the eager baseline.
-    s0 = torch.tensor(
-        [[1.0 + 0j, 0.25 + 0.1j], [0.25 - 0.1j, 1.5 + 0j]],
-        dtype=torch.complex128,
-    )
-    h0 = torch.linalg.cholesky(s0) @ torch.diag(
-        torch.tensor([1.0 + 0j, 0.5 + 0j], dtype=torch.complex128)
-    )
-    x = torch.tensor([1.0 + 0j, -1j], dtype=torch.complex128)
-    noise0 = torch.tensor([0.07 + 0.02j, -0.03 + 0.05j], dtype=torch.complex128)
-    compiled_conditional = torch.compile(
-        conditional_view_power2_whiten_channel, fullgraph=True
-    )
-    conditional_results = {}
-    for label, scale in (("normal", 1.0), ("subnormal", 1e-320)):
-        root = math.sqrt(scale)
-        s = (scale * s0).expand(128, -1, -1).clone()
-        h = (root * h0).expand(128, -1, -1).clone()
-        y = (root * (h0 @ x + noise0)).expand(128, -1).clone()
-        conditional_results[label] = {
-            "baseline_eager": _benchmark_once(
-                lambda yy, hh, ss: baseline_whiten_channel(
-                    yy, hh, ss, return_s=False
-                ),
-                y, h, s, 3, 5, 40,
-            ),
-            "conditional_eager": _benchmark_once(
-                conditional_view_power2_whiten_channel, y, h, s, 3, 5, 40
-            ),
-            "conditional_inductor": _benchmark_once(
-                compiled_conditional, y, h, s, 3, 5, 40
-            ),
-        }
-
     return {
         "device": "CPU",
         "torch": torch.__version__,
         "threads": torch.get_num_threads(),
-        "timing_scope": "local matched eager/Inductor calls; not GPU or end-to-end detector latency",
+        "timing_scope": "local matched eager calls; not GPU or end-to-end detector latency",
         "results": result,
-        "conditional_fast_path": conditional_results,
     }
 
 
