@@ -173,22 +173,94 @@ def test_tensor_only_path_captures_fullgraph_for_normal_and_subnormal():
 
 
 
-def test_conditional_path_matches_baseline_and_scaled_candidates():
-    normal = _base_problem(torch.complex128, 1.0)
-    by, bh = baseline_whiten_channel(normal[0], normal[1], normal[2], return_s=False)
-    cy, ch = conditional_power2_whiten_channel(normal[0], normal[1], normal[2])
-    assert torch.equal(cy, by)
-    assert torch.equal(ch, bh)
-
-    extreme = _base_problem(torch.complex128, 1e-320)
-    cy, ch = conditional_power2_whiten_channel(extreme[0], extreme[1], extreme[2])
-    ay, ah = power2_whiten_channel(extreme[0], extreme[1], extreme[2])
-    torch.testing.assert_close(cy, ay, rtol=0, atol=0)
-    torch.testing.assert_close(ch, ah, rtol=0, atol=0)
+def test_componentwise_division_normal_range_is_exact_noop():
+    y, h, s, *_ = _base_problem(torch.complex128, 1e-200)
+    by, bh = baseline_whiten_channel(y, h, s, return_s=False)
+    ay, ah, diagnostics = adaptive_div_whiten_channel(
+        y, h, s, return_diagnostics=True
+    )
+    assert diagnostics["applied_exponent"].item() == 0
+    assert torch.equal(ay, by)
+    assert torch.equal(ah, bh)
 
 
-def test_conditional_path_captures_fullgraph_for_normal_and_subnormal():
-    fn = conditional_power2_whiten_channel
+def test_componentwise_division_subnormal_complex128_matches_mpmath():
+    y, h, s, *_ = _base_problem(torch.complex128, 1e-320)
+    symbols = torch.tensor(
+        [[1 + 0j, 1j], [-1 + 0j, 1j], [1j, -1j], [-1j, -1 + 0j]],
+        dtype=torch.complex128,
+    )
+    yw, hw, diagnostics = adaptive_div_whiten_channel(
+        y, h, s, return_diagnostics=True
+    )
+    assert diagnostics["applied_exponent"].item() != 0
+    assert torch.isfinite(yw).all() and torch.isfinite(hw).all()
+    np.testing.assert_allclose(
+        (hw.mH @ hw).detach().cpu().numpy(),
+        _oracle_gram(h, s),
+        rtol=0,
+        atol=1e-12,
+    )
+    np.testing.assert_allclose(
+        _whitened_distances(yw, hw, symbols),
+        _oracle_distances(y, h, s, symbols),
+        rtol=0,
+        atol=1e-12,
+    )
+
+
+def test_componentwise_division_top_exponent_complex128_matches_mpmath():
+    y, h, s, *_ = _base_problem(torch.complex128, 1e308)
+    yw, hw, diagnostics = adaptive_div_whiten_channel(
+        y, h, s, return_diagnostics=True
+    )
+    assert diagnostics["applied_exponent"].item() != 0
+    assert torch.isfinite(yw).all() and torch.isfinite(hw).all()
+    np.testing.assert_allclose(
+        (hw.mH @ hw).detach().cpu().numpy(),
+        _oracle_gram(h, s),
+        rtol=0,
+        atol=1e-12,
+    )
+
+
+def test_componentwise_division_subnormal_complex64_matches_double_solve():
+    y, h, s, *_ = _base_problem(torch.complex64, 1e-40)
+    yw, hw, diagnostics = adaptive_div_whiten_channel(
+        y, h, s, return_diagnostics=True
+    )
+    assert diagnostics["applied_exponent"].item() != 0
+    assert torch.isfinite(yw).all() and torch.isfinite(hw).all()
+    hd = h.to(torch.complex128)
+    sd = s.to(torch.complex128)
+    reference = hd.mH @ torch.linalg.solve(sd, hd)
+    torch.testing.assert_close(
+        hw.to(torch.complex128).mH @ hw.to(torch.complex128),
+        reference,
+        rtol=1e-5,
+        atol=1e-5,
+    )
+
+
+def test_componentwise_division_mixed_batch_broadcasts():
+    y0, h0, s0, *_ = _base_problem(torch.complex128, 1.0)
+    scales = (1e-320, 1.0)
+    s = torch.stack([s0 * scales[0], s0 * scales[1]]).unsqueeze(1)
+    h = torch.stack([h0 * math.sqrt(scales[0]), h0]).unsqueeze(1).expand(-1, 3, -1, -1).clone()
+    y = torch.stack([y0 * math.sqrt(scales[0]), y0]).unsqueeze(1).expand(-1, 3, -1).clone()
+    yw, hw, diagnostics = adaptive_div_whiten_channel(
+        y, h, s, return_diagnostics=True
+    )
+    assert yw.shape == (2, 3, 2)
+    assert hw.shape == (2, 3, 2, 2)
+    assert diagnostics["applied_exponent"].shape == (2, 1)
+    assert diagnostics["applied_exponent"][0, 0] != 0
+    assert diagnostics["applied_exponent"][1, 0] == 0
+    assert torch.isfinite(yw).all() and torch.isfinite(hw).all()
+
+
+def test_componentwise_division_captures_fullgraph():
+    fn = adaptive_div_whiten_channel
     compiled = torch.compile(fn, backend="eager", fullgraph=True)
     for scale in (1.0, 1e-320):
         y, h, s, *_ = _base_problem(torch.complex128, scale)
