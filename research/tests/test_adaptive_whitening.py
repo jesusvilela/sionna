@@ -12,7 +12,7 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "experiments"))
 from adaptive_whitening import (  # noqa: E402
-    conditional_power2_whiten_channel,
+    adaptive_div_whiten_channel,
     power2_whiten_channel,
 )
 from sionna.phy.mimo.utils import whiten_channel as baseline_whiten_channel  # noqa: E402
