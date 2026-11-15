@@ -49,25 +49,35 @@ def _expand_batch(value: torch.Tensor, batch_shape: tuple[int, ...]) -> torch.Te
     return padded.expand(batch_shape)
 
 
-def _exponent_policy(s: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-    """Return raw frexp exponents and only the exponents requiring rescaling.
+def _component_max(s: torch.Tensor) -> torch.Tensor:
+    if s.is_complex():
+        return torch.maximum(
+            torch.amax(torch.abs(s.real), dim=(-2, -1)),
+            torch.amax(torch.abs(s.imag), dim=(-2, -1)),
+        )
+    return torch.amax(torch.abs(s), dim=(-2, -1))
 
-    The active interval is the normal representable range of the real component
-    dtype. For an SPD matrix whose maximum magnitude is in that interval, the
-    candidate leaves its mathematical representation unchanged.
-    """
+
+def _exponent_policy(s: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    """Return raw frexp exponents and only the exponents requiring rescaling."""
     real_dtype = s.real.dtype if s.is_complex() else s.dtype
     finfo = torch.finfo(real_dtype)
     lower_normal_exponent = math.frexp(float(finfo.tiny))[1]
     upper_normal_exponent = math.frexp(float(finfo.max))[1] - 1
 
-    max_abs = torch.amax(torch.abs(s), dim=(-2, -1))
-    _, exponent = torch.frexp(max_abs)
+    max_component = _component_max(s)
+    _, exponent = torch.frexp(max_component)
     needs_rescale = (exponent < lower_normal_exponent) | (
         exponent > upper_normal_exponent
     )
     applied = torch.where(needs_rescale, exponent, torch.zeros_like(exponent))
     return exponent, applied
+
+
+def _divide_by_real_scale(value: torch.Tensor, scale: torch.Tensor) -> torch.Tensor:
+    if value.is_complex():
+        return torch.complex(value.real / scale, value.imag / scale)
+    return value / scale
 
 
 def _power2_core(
@@ -198,8 +208,8 @@ def run_benchmarks() -> dict:
                 "adaptive_power2": _benchmark_once(
                     power2_whiten_channel, y, h, s, 10, 5, 40
                 ),
-                "conditional_power2": _benchmark_once(
-                    conditional_power2_whiten_channel, y, h, s, 10, 5, 40
+                "adaptive_division": _benchmark_once(
+                    adaptive_div_whiten_channel, y, h, s, 10, 5, 40
                 ),
                 "always_power2": _benchmark_once(
                     lambda yy, hh, ss: power2_whiten_channel(
