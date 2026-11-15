@@ -147,31 +147,47 @@ def power2_whiten_channel(
     return outputs
 
 
-def _conditional_scaled_branch(y, h, s, applied_exponent):
-    return _power2_core(y, h, s, applied_exponent)
+def adaptive_div_whiten_channel(
+    y: torch.Tensor,
+    h: torch.Tensor,
+    s: torch.Tensor,
+    *,
+    return_diagnostics: bool = False,
+) -> tuple[Any, ...]:
+    """Adaptive covariance scaling by componentwise real/imaginary division.
 
-
-def _conditional_baseline_branch(y, h, s, applied_exponent):
-    return baseline_whiten_channel(y, h, s, return_s=False)
-
-
-def conditional_power2_whiten_channel(
-    y: torch.Tensor, h: torch.Tensor, s: torch.Tensor
-) -> tuple[torch.Tensor, torch.Tensor]:
-    """Use torch.cond to retain the exact production path for normal-range S.
-
-    The predicate is a device tensor. No item(), host synchronization, or
-    Python data-dependent branch is used; the scaled branch is entered only
-    when at least one covariance in the batch is outside the normal range.
+    The scale is the maximum absolute real or imaginary component. It is set
+    to one for normal-range covariance inputs, preserving their represented
+    values exactly. For extreme inputs, S is divided by scale and y/H by its
+    square root. This avoids complex division and avoids ldexp on subnormals.
     """
-    _, applied_exponent = _exponent_policy(s)
-    predicate = torch.any(applied_exponent != 0)
-    return torch.cond(
-        predicate,
-        _conditional_scaled_branch,
-        _conditional_baseline_branch,
-        (y, h, s, applied_exponent),
+    raw_exponent, applied_exponent = _exponent_policy(s)
+    max_component = _component_max(s)
+    scale = torch.where(
+        applied_exponent != 0, max_component, torch.ones_like(max_component)
     )
+    s_scale = scale[..., None, None]
+    s_unit = _divide_by_real_scale(s, s_scale)
+
+    batch_shape = torch.broadcast_shapes(
+        tuple(s.shape[:-2]), tuple(h.shape[:-2]), tuple(y.shape[:-1])
+    )
+    scale_full = _expand_batch(scale, batch_shape)
+    root_scale = torch.sqrt(scale_full)
+    y_scaled = _divide_by_real_scale(y, root_scale[..., None])
+    h_scaled = _divide_by_real_scale(h, root_scale[..., None, None])
+
+    l_inv = inv_cholesky(s_unit)
+    yw = (l_inv @ y_scaled.unsqueeze(-1)).squeeze(-1)
+    hw = l_inv @ h_scaled
+
+    if return_diagnostics:
+        return yw, hw, {
+            "raw_exponent": raw_exponent,
+            "applied_exponent": applied_exponent,
+            "scale": scale,
+        }
+    return yw, hw
 
 
 def _benchmark_once(fn, y, h, s, warmup: int, repeats: int, loops: int) -> dict:
