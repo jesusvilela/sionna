@@ -41,7 +41,7 @@ All code remains on branch \`research/adaptive-power2-whitening-2026-11-15\`:
 
 ## Verification
 
-Latest passing numerical/benchmark run: [GitHub Actions 43755135679](https://github.com/jesusvilela/sionna/actions/runs/43755135679), exact head \`c768437d2a4d2eded0f400ed765b47b15bb659c1\`.
+Latest passing numerical/benchmark run: [GitHub Actions 43755525932](https://github.com/jesusvilela/sionna/actions/runs/43755135679), exact head \`474304b837d7ac5eeb51adcc68993562f5a3d4ae\`.
 
 | Runtime | Research tests | Result |
 |---|---:|---|
@@ -65,12 +65,12 @@ Single-thread CPU, complex128, eager calls, warmup 10, five timing samples of 40
 
 | Matrix / batch | Production baseline | Adaptive division | Power-of-two | Conditional view, eager |
 |---|---:|---:|---:|---:|
-| 2x2 / 128 | 0.049–0.080 | 0.187–0.317 | 0.277–0.463 | 0.437–0.642 |
-| 2x2 / 1024 | 0.233–0.327 | 0.434–0.639 | 0.658–1.046 | 0.669–0.964 |
-| 8x8 / 128 | 0.164–0.221 | 0.340–0.514 | 0.581–0.939 | 0.605–0.893 |
-| 8x8 / 1024 | 1.135–1.478 | 2.159–3.126 | 4.338–6.635 | 1.676–2.296 |
+| 2x2 / 128 | 0.051–0.075 | 0.144–0.325 | 0.210–0.471 | 0.384–0.652 |
+| 2x2 / 1024 | 0.270–0.324 | 0.432–0.639 | 0.611–1.056 | 0.699–0.973 |
+| 8x8 / 128 | 0.126–0.224 | 0.266–0.517 | 0.462–0.948 | 0.564–0.894 |
+| 8x8 / 1024 | 0.934–1.468 | 2.164–2.423 | 3.623–6.517 | 1.604–2.293 |
 
-Ranges show the two tested runtime combinations, not confidence intervals. On these ordinary-range cases, adaptive division costs roughly **1.5–4.0x** the baseline, power-of-two scaling roughly **2.8–5.8x**, and eager conditional-view execution roughly **1.5–8.9x**. These are local CPU timings only. They do not predict GPU or end-to-end detector latency.
+Ranges show the two tested runtime combinations, not confidence intervals. On these ordinary-range cases, adaptive division costs roughly **1.5–4.3x** the baseline, power-of-two scaling roughly **2.3–6.3x**, and eager conditional-view execution roughly **1.5–8.9x**. These are local CPU timings only. They do not predict GPU or end-to-end detector latency.
 
 A batched Inductor benchmark for the conditional-view path was attempted separately. It failed in generated C++ with a vectorized integer addition type mismatch (\`VectorizedN<int, 2>\` versus \`Vectorized<int>\`) in both tested PyTorch environments. This is recorded as an environment/compiler obstruction, not a mathematical counterexample. The small-shape Inductor correctness test itself passed.
 
