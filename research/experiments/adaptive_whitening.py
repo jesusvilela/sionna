@@ -162,7 +162,7 @@ def run_benchmarks() -> dict:
             key = f"n={dim},batch={batch}"
             result[key] = {
                 "baseline": _benchmark_once(
-                    baseline_whiten_channel, y, h, s, 10, 5, 40
+                    lambda yy, hh, ss: baseline_whiten_channel(yy, hh, ss, return_s=False), y, h, s, 10, 5, 40
                 ),
                 "adaptive_power2": _benchmark_once(
                     power2_whiten_channel, y, h, s, 10, 5, 40
