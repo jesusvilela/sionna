@@ -1,0 +1,59 @@
+name: Research adaptive power-of-two whitening
+
+on:
+  push:
+    branches:
+      - research/adaptive-power2-whitening-2026-11-15
+  pull_request:
+    branches:
+      - main
+    paths:
+      - research/experiments/adaptive_whitening.py
+      - research/tests/test_adaptive_whitening.py
+      - .github/workflows/research-adaptive-whitening.yml
+
+permissions:
+  contents: read
+
+jobs:
+  cpu:
+    name: Adaptive whitening (Python \${{ matrix.py }}, Torch \${{ matrix.torch }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - py: "3.11"
+            torch: "2.9.1"
+          - py: "3.13"
+            torch: "2.10.0"
+    timeout-minutes: 25
+    env:
+      PYTHONPATH: src:research/experiments
+      SIONNA_DEVICE: cpu
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python \${{ matrix.py }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: "\${{ matrix.py }}"
+      - name: Install CPU numerical dependencies
+        run: |
+          python -m pip install --disable-pip-version-check --no-cache-dir \
+            torch==\${{ matrix.torch }} --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install --disable-pip-version-check --no-cache-dir \
+            "numpy>=2.2.6" "scipy>=1.15.3" "h5py>=3.15.1" \
+            "matplotlib>=3.10.8" "importlib-resources>=6.5.2" pytest mpmath
+      - name: Print runtime and source revision
+        run: |
+          git rev-parse HEAD
+          python -c 'import sys, torch, numpy, mpmath; print(sys.version); print(torch.__version__); print(numpy.__version__); print(mpmath.__version__)'
+      - name: Adaptive whitening numerical, representation and graph tests
+        run: |
+          python -m pytest research/tests/test_adaptive_whitening.py -q
+      - name: Matched ordinary-scale CPU benchmark
+        run: |
+          python research/experiments/adaptive_whitening.py --benchmark
