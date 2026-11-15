@@ -311,3 +311,18 @@ def test_conditional_view_path_inductor_compilation():
         actual = compiled(y, h, s)
         torch.testing.assert_close(actual[0], expected[0], rtol=0, atol=0)
         torch.testing.assert_close(actual[1], expected[1], rtol=0, atol=0)
+
+
+
+def test_conditional_view_path_inductor_compilation_batched():
+    fn = conditional_view_power2_whiten_channel
+    compiled = torch.compile(fn, fullgraph=True)
+    for scale in (1.0, 1e-320):
+        y0, h0, s0, *_ = _base_problem(torch.complex128, scale)
+        y = y0.expand(128, -1).clone()
+        h = h0.expand(128, -1, -1).clone()
+        s = s0.expand(128, -1, -1).clone()
+        expected = fn(y, h, s)
+        actual = compiled(y, h, s)
+        torch.testing.assert_close(actual[0], expected[0], rtol=0, atol=0)
+        torch.testing.assert_close(actual[1], expected[1], rtol=0, atol=0)
