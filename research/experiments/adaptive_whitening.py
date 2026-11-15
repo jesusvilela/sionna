@@ -24,13 +24,21 @@ from sionna.phy.utils.linalg import inv_cholesky
 
 
 def _ldexp_tensor(value: torch.Tensor, exponent: torch.Tensor) -> torch.Tensor:
-    """Apply an exact binary exponent to real or complex tensors."""
+    """Apply a binary exponent without feeding subnormals to ldexp directly.
+
+    Some CPU kernels can flush subnormal inputs before applying ldexp. frexp
+    first decomposes each component into a normal mantissa and integer exponent;
+    ldexp then acts on the mantissa, while exponents are combined exactly.
+    """
     if value.is_complex():
+        real_mantissa, real_exponent = torch.frexp(value.real)
+        imag_mantissa, imag_exponent = torch.frexp(value.imag)
         return torch.complex(
-            torch.ldexp(value.real, exponent),
-            torch.ldexp(value.imag, exponent),
+            torch.ldexp(real_mantissa, real_exponent + exponent),
+            torch.ldexp(imag_mantissa, imag_exponent + exponent),
         )
-    return torch.ldexp(value, exponent)
+    mantissa, value_exponent = torch.frexp(value)
+    return torch.ldexp(mantissa, value_exponent + exponent)
 
 
 def _expand_batch(value: torch.Tensor, batch_shape: tuple[int, ...]) -> torch.Tensor:
