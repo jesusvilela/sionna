@@ -108,3 +108,17 @@ A batched Inductor benchmark for the conditional-view path was attempted separat
 - **Promotion rule:** only an independently reproduced defect on supported hardware and a production-relevant workload can justify upstream consideration.
 
 The original research claim is therefore narrowed: scalar adaptive scaling can repair selected floating-point exponent failures, but the current tensor-level implementations are not production-worthy because their ordinary-case cost is too high.
+
+
+## Upstream data-path relevance check
+
+A source inspection of the current Sionna PHY tree found these relevant paths:
+
+- MaximumLikelihoodDetector.call invokes whiten_channel(y, h, s, return_s=False).
+- lmmse_equalizer also has a whitening path for its supplied covariance.
+- OFDM compute_interference_covariance_matrix forms \(S=\operatorname{diag}(no)+H_{\rm undesired}H_{\rm undesired}^\dagger\) when those inputs are supplied.
+- The AWGN block accepts a caller-supplied variance no and scales generated noise by \(\sqrt{no}\). The inspected source does not impose a positive lower exponent bound on no.
+
+Thus subnormal S is representable as an extreme caller-supplied case when interference is absent or negligible, but no inspected example or test demonstrates that supported operating workloads routinely approach the subnormal range. The documentation example uses no=0.1; this is illustrative, not a distributional survey. There is no authenticated Munich receiver covariance dataset in this experiment.
+
+This further weakens the case for paying a universal runtime cost to handle a synthetic exponent edge case. A real deployment trace showing subnormal or top-bin covariance inputs is the prerequisite for the proposed fused follow-up.
