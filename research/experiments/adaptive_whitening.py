@@ -190,6 +190,47 @@ def adaptive_div_whiten_channel(
     return yw, hw
 
 
+def _view_scaled_branch(y_real, h_real, s_real, applied_exponent):
+    y = torch.view_as_complex(y_real)
+    h = torch.view_as_complex(h_real)
+    s = torch.view_as_complex(s_real)
+    return _power2_core(y, h, s, applied_exponent)
+
+
+def _view_baseline_branch(y_real, h_real, s_real, applied_exponent):
+    y = torch.view_as_complex(y_real)
+    h = torch.view_as_complex(h_real)
+    s = torch.view_as_complex(s_real)
+    return baseline_whiten_channel(y, h, s, return_s=False)
+
+
+def conditional_view_power2_whiten_channel(
+    y: torch.Tensor, h: torch.Tensor, s: torch.Tensor
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """torch.cond fast path with complex inputs represented as real views.
+
+    This variant tests whether passing each complex input as one real-valued
+    view avoids the real/imaginary input-alias restriction observed with
+    torch.cond on complex operands.
+    """
+    if not (y.is_complex() and h.is_complex() and s.is_complex()):
+        raise TypeError("conditional view path currently requires complex tensors")
+    _, applied_exponent = _exponent_policy(s)
+    predicate = torch.any(applied_exponent != 0)
+    operands = (
+        torch.view_as_real(y),
+        torch.view_as_real(h),
+        torch.view_as_real(s),
+        applied_exponent,
+    )
+    return torch.cond(
+        predicate,
+        _view_scaled_branch,
+        _view_baseline_branch,
+        operands,
+    )
+
+
 def _benchmark_once(fn, y, h, s, warmup: int, repeats: int, loops: int) -> dict:
     for _ in range(warmup):
         fn(y, h, s)
@@ -226,6 +267,9 @@ def run_benchmarks() -> dict:
                 ),
                 "adaptive_division": _benchmark_once(
                     adaptive_div_whiten_channel, y, h, s, 10, 5, 40
+                ),
+                "conditional_view_power2": _benchmark_once(
+                    conditional_view_power2_whiten_channel, y, h, s, 10, 5, 40
                 ),
                 "always_power2": _benchmark_once(
                     lambda yy, hh, ss: power2_whiten_channel(
