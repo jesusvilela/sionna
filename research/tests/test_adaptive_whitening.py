@@ -299,3 +299,15 @@ def test_conditional_view_path_captures_fullgraph():
         actual = compiled(y, h, s)
         torch.testing.assert_close(actual[0], expected[0], rtol=0, atol=0)
         torch.testing.assert_close(actual[1], expected[1], rtol=0, atol=0)
+
+
+
+def test_conditional_view_path_inductor_compilation():
+    fn = conditional_view_power2_whiten_channel
+    compiled = torch.compile(fn, fullgraph=True)
+    for scale in (1.0, 1e-320):
+        y, h, s, *_ = _base_problem(torch.complex128, scale)
+        expected = fn(y, h, s)
+        actual = compiled(y, h, s)
+        torch.testing.assert_close(actual[0], expected[0], rtol=0, atol=0)
+        torch.testing.assert_close(actual[1], expected[1], rtol=0, atol=0)
