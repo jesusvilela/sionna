@@ -3,8 +3,8 @@
 **Date:** 17 November 2026  
 **Repository:** jesusvilela/sionna, research/lmmse-conditioning-audit-2026-11-17  
 **Core experiment:** research/experiments/lmmse_conditioning_sweep.py  
-**Exact full-output evidence:** [GitHub Actions run 44045467845](https://github.com/jesusvilela/sionna/actions/runs/44045467845), with separately retained Python 3.11 and Python 3.13 JSON artifacts.  
-**Historical comparison:** [earlier run 44044950856](https://github.com/jesusvilela/sionna/actions/runs/44044950856).
+**Latest full-output evidence:** [GitHub Actions run 44046202194](https://github.com/jesusvilela/sionna/actions/runs/44046202194), with separately retained Python 3.11 and Python 3.13 JSON artifacts.  
+**Earlier reproductions:** [run 44045467845](https://github.com/jesusvilela/sionna/actions/runs/44045467845) and [run 44044950856](https://github.com/jesusvilela/sionna/actions/runs/44044950856).
 
 ## Verdict
 
@@ -12,11 +12,11 @@ The algebraic LMMSE receiver-frame invariance is correct under the
 positive-definite covariance and invertibility assumptions, and **all 64
 preregistered moderately conditioned tests per CPU environment passed**.
 It is **not uniformly reliable in finite precision** for strongly
-conditioned transformations: 36 otherwise completed stress cases in each
-environment exceeded the defined numerical tolerance and four single-
-precision whitening cases in each final run produced nonfinite outputs.
-In those four cases, the *transported floating-point covariance itself*
-failed the positive-definiteness check. These are adverse numerical
+conditioned transformations: between 36 and 38 otherwise completed
+extreme-stress cases exceeded the defined numerical tolerance per run,
+and between two and four single-precision whitening rows per run produced
+nonfinite outputs. In the nonfinite cases, the *transported floating-point
+covariance itself* failed the numerical positive-definiteness check. These are adverse numerical
 results, not counterexamples to the algebraic theorem. They do not
 establish a new Sionna product bug or a physical 6G effect.
 
@@ -73,10 +73,18 @@ two precisions and both whitening settings: **256 rows per environment**.
 
 | Final CPU environment | Safe failures / 64 | Completed rows / 256 | Nonfinite solver rows | Out-of-tolerance completed rows outside safe gate |
 |---|---:|---:|---:|---:|
-| Python 3.11, PyTorch 2.9.1 | 0 | 252 | 4 | 36 |
+| Python 3.11, PyTorch 2.9.1 | 0 | 254 | 2 | 38 |
 | Python 3.13, PyTorch 2.10.0 | 0 | 252 | 4 | 36 |
 
-All four nonfinite rows in each final run involved **single precision,
+These are counts from the **latest exact-run 44046202194**, not a
+global failure rate. An earlier run 44045467845 reported 252 completed,
+four nonfinite and 36 out-of-tolerance rows in **both** runtimes.
+Run 44044950856 instead reported two nonfinite in Python 3.11.
+Thus counts vary in the high-stress region even with seeded scripts.
+The total problematic count in these runs remained 40 rows per runtime,
+but some rows changed between nonfinite and finite inaccurate output.
+
+The nonfinite rows involved **single precision,
 whiten_interference=True, target \(\kappa_2(S)=10^6\)** and a frame
 condition target of 30 or 300. Recorded
 torch.linalg.cholesky_ex diagnostics returned **info 2 or 3** for the
@@ -174,8 +182,8 @@ persist hashes of the exact original and transported matrix bytes.
 Thus differences between separate hosted runs cannot yet be attributed
 to a library version or CPU backend. This is unresolved remainder.
 
-The first and final runs disagree in the number of nonfinite cases
-for one runtime, despite a reporting-focused source revision.
+Multiple runs disagree in the number of nonfinite cases
+for one runtime, including after a documentation-only revision.
 That observation explicitly blocks any claim of bitwise cross-run
 reproducibility at the most extreme condition settings.
 
@@ -229,9 +237,10 @@ been elevated to a new physical-layer performance result.
   its LMMSE posterior consequence, under explicit assumptions.
 - **A:** invertible \(W\), SPD \(S\), nonzero LMMSE stream normalizers,
   valid linear-Gaussian model.
-- **M:** 64/64 safe cases passed per CPU runtime, 36 extreme
-  out-of-tolerance finite rows and four nonfinite rows per final run,
-  actual stored-input diagnostics, two raw JSON artifacts.
+- **M:** 64/64 safe cases passed per CPU runtime, 36–38 extreme
+  out-of-tolerance completed rows and two to four nonfinite rows
+  across repeated runs, actual represented-input diagnostics and
+  raw JSON artifacts retained separately for each runtime and run.
 - **H:** general GPU numerical robustness and physical 6G sensitivity.
 - **S:** receiver "moving frame" is a coordinate transformation,
   not a new physical channel.
