@@ -15,9 +15,9 @@ cases on each of two supported CPU runtimes. This result complements, but is
 
 ## Exact mathematical claim [P, with assumptions A]
 
-Assume (S=S^\dagger\succ0), (W) invertible,
-(y'=Wy), (H'=WH), and (S'=WSW^\dagger).
-Since (S'^{-1}=(W^\dagger)^{-1}S^{-1}W^{-1}),
+Assume $S=S^\dagger\succ0$, $W$ invertible,
+$y'=Wy$, $H'=WH$, and $S'=WSW^\dagger$.
+Since $S'^{-1}=(W^\dagger)^{-1}S^{-1}W^{-1}$,
 
 \[
 Q'=H'^\dagger S'^{-1}H'=H^\dagger S^{-1}H=Q,
@@ -25,9 +25,9 @@ Q'=H'^\dagger S'^{-1}H'=H^\dagger S^{-1}H=Q,
 b'=H'^\dagger S'^{-1}y'=H^\dagger S^{-1}y=b.
 \]
 
-With unit transmit-symbol covariance, let (C=(I+Q)^{-1}).
-The unscaled posterior mean is (Cb).
-For (d=\operatorname{diag}(I-C)), Sionna's streamwise
+With unit transmit-symbol covariance, let $C=(I+Q)^{-1}$.
+The unscaled posterior mean is $Cb$.
+For $d=\operatorname{diag}(I-C)$, Sionna's streamwise
 equalizer convention is
 
 \[
@@ -36,21 +36,21 @@ n_{\rm eff}=\operatorname{Re}(1\oslash d-1).
 \]
 
 Both are invariant in exact arithmetic.
-A nonunitary (W) **does not** preserve Euclidean distances; the proof
-requires transporting (S), not just (y) and (H).
+A nonunitary $W$ **does not** preserve Euclidean distances; the proof
+requires transporting $S$, not just $y$ and $H$.
 
 ## Live implementation tested [M]
 
 - Production function: `sionna.phy.mimo.equalization.lmmse_equalizer`.
 - Both `whiten_interference=True` and `False`.
-- (M\in\{2,4\}), two streams, batch size four, synthetic colored
+- $M\in\{2,4\}$, two streams, batch size four, synthetic colored
   Hermitian-positive-definite covariance.
 - Single and double complex precision.
 - Two nonunitary receiver-frame transformations for each test.
 - Independent computational oracle built from direct covariance solves and
-  (C=(I+H^\dagger S^{-1}H)^{-1}); neither the Sionna LMMSE implementation
+  $C=(I+H^\dagger S^{-1}H)^{-1}$; neither the Sionna LMMSE implementation
   nor the whitening function is reused to construct that oracle.
-- Negative control deliberately transports (y,H) but not (S); the test
+- Negative control deliberately transports $y,H$ but not $S$; the test
   rejects an apparent invariance of the resulting *different noise model*.
 
 Numerical witness: [GitHub Actions run 44041648016](https://github.com/jesusvilela/sionna/actions/runs/44041648016).
@@ -60,8 +60,8 @@ Numerical witness: [GitHub Actions run 44041648016](https://github.com/jesusvile
 | Python 3.11 / PyTorch 2.9.1 CPU | 8 passed | 6 passed, 56 deselected |
 | Python 3.13 / PyTorch 2.10.0 CPU | 8 passed | 6 passed, 56 deselected |
 
-The test suite uses (\mathrm{atol}=\mathrm{rtol}=2\cdot10^{-4})
-(single) or (2\cdot10^{-11}) (double). These are finite tolerance
+The test suite uses $\mathrm{atol}=\mathrm{rtol}=2\cdot10^{-4}$
+(single) or $2\cdot10^{-11}$ (double). These are finite tolerance
 checks, not exact equality in floating-point arithmetic.
 
 ## Strength and limitations
@@ -89,8 +89,8 @@ for inclusion in this contribution.
 
 | Claim | Classification |
 |---|---|
-| Invariance under invertible coherent receiver-frame transport | P (conditional on SPD (S)) |
-| Fixed seeded/synthetic CPU tests agree for the tested cases | M |
+| Invariance under invertible coherent receiver-frame transport | P (conditional on SPD $S$) |
+| Fixed deterministic/synthetic CPU tests agree for the tested cases | M |
 | Numerical agreement extends to arbitrary matrices, hardware, or compilers | H, unverified |
 | Improved physical 6G signal quality or BER/SER | H, unverified |
 | Existing adaptive-normalization variants should enter production | R, retired on measured CPU cost |
