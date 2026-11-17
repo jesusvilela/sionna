@@ -1,0 +1,34 @@
+name: Research matched-host audit archive
+
+on:
+  push:
+    branches:
+      - research/lmmse-matched-host-aba-2026-11-17
+    paths:
+      - research/LMMSE_MATCHED_HOST_ABA_MANIFEST_2026-11-17.json
+      - research/LMMSE_MATCHED_HOST_ABA_AUDIT_2026-11-17.md
+      - .github/workflows/research-lmmse-matched-host-audit.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check exact JSON syntax and preserve hashes
+        run: |
+          python -m json.tool research/LMMSE_MATCHED_HOST_ABA_MANIFEST_2026-11-17.json > /dev/null
+          sha256sum research/LMMSE_MATCHED_HOST_ABA_MANIFEST_2026-11-17.json
+          sha256sum research/LMMSE_MATCHED_HOST_ABA_AUDIT_2026-11-17.md
+      - name: Preserve audit text and manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: matched-host-lmmse-audit
+          path: |
+            research/LMMSE_MATCHED_HOST_ABA_MANIFEST_2026-11-17.json
+            research/LMMSE_MATCHED_HOST_ABA_AUDIT_2026-11-17.md
+          retention-days: 30
