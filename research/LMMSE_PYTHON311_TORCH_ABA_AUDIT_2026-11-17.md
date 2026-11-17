@@ -2,7 +2,7 @@
 
 **17 November 2026. Research-only, not a production proposal.**
 
-Exact [Actions run 44064419391](https://github.com/jesusvilela/sionna/actions/runs/44064419391); tested source commit \`a3b72845fb6e8fe3d804b2e74873d1381208d233\`; frozen fixture SHA-256 \`f6a943a80f49286de247f8327e620f2155086fda88210acfcef9863951b76995\`.
+Exact [Actions run 44064419391](https://github.com/jesusvilela/sionna/actions/runs/44064419391); tested source commit `a3b72845fb6e8fe3d804b2e74873d1381208d233`; frozen fixture SHA-256 `f6a943a80f49286de247f8327e620f2155086fda88210acfcef9863951b76995`.
 
 ## Verdict
 
@@ -12,7 +12,7 @@ Holding **Python 3.11.18**, the GitHub-hosted CPU and six frozen complex input f
 
 | Claim | Before | Artifact | Result | After |
 |---|---|---|---|---|
-| Coherent invertible frame transport preserves exact LMMSE statistics | P conditional | \`S'=WSW†\` posterior identity | Survives under SPD and normalization assumptions | P |
+| Coherent invertible frame transport preserves exact LMMSE statistics | P conditional | `S'=WSW†` posterior identity | Survives under SPD and normalization assumptions | P |
 | Fixed-Python, fixed-host Torch releases can agree byte-for-byte on selected data | H | A1-B-A2 run 44064419391 | 27/27 finite repeated rows equal in every comparison | M |
 | Tested moderately conditioned outputs meet oracle tolerance | M | 100-digit mpmath represented-input posterior | 12/12 safe repeated rows passed per stage | M |
 | A Torch version change necessarily changes output bits | H | Same-host A1 vs B | False as a universal assertion | R |
@@ -22,7 +22,7 @@ Holding **Python 3.11.18**, the GitHub-hosted CPU and six frozen complex input f
 
 ## Test object and independent witness
 
-The experiment fixes source and transported observations, channels, covariance matrices, and receiver-frame operators as serialized \`complex64\` / \`complex128\` little-endian bytes. Every replay verifies SHA-256, dtype and shape. Six purposively selected fixtures × two whitening modes × three repeats = **36 rows per stage**, of which **27 are finite** (nine distinct fixture/mode combinations). Three extreme whitening configurations generate nine repeated nonfinite rows. These are **not independent RF observations**.
+The experiment fixes source and transported observations, channels, covariance matrices, and receiver-frame operators as serialized `complex64` / `complex128` little-endian bytes. Every replay verifies SHA-256, dtype and shape. Six purposively selected fixtures × two whitening modes × three repeats = **36 rows per stage**, of which **27 are finite** (nine distinct fixture/mode combinations). Three extreme whitening configurations generate nine repeated nonfinite rows. These are **not independent RF observations**.
 
 A separate 100-digit mpmath posterior oracle evaluates the *actual represented inputs*. It is computationally different from Sionna's LMMSE path, but shares the same synthetic-data provenance and does not independently validate physical performance.
 
@@ -46,10 +46,10 @@ The A1 → A2 return-to-original comparison is the crucial same-version control.
 
 ## Representation attack and load-bearing obstruction
 
-A diagnostic recomputed \`W @ S @ W.mH\`, without replacing any frozen solver input:
+A diagnostic recomputed `W @ S @ W.mH`, without replacing any frozen solver input:
 
-- Current **AMD/AVX2** job: both Torch versions recomputed all six covariance fixtures with bytes matching the originally stored \`sp\` arrays.
-- Earlier [Intel Xeon 8573C / AVX-512 same-host experiment](https://github.com/jesusvilela/sionna/actions/runs/44054491046): both versions agreed with one another but neither matched the originally stored \`sp\` bytes in any of six fixtures.
+- Current **AMD/AVX2** job: both Torch versions recomputed all six covariance fixtures with bytes matching the originally stored `sp` arrays.
+- Earlier [Intel Xeon 8573C / AVX-512 same-host experiment](https://github.com/jesusvilela/sionna/actions/runs/44054491046): both versions agreed with one another but neither matched the originally stored `sp` bytes in any of six fixtures.
 - Earlier **separate-host** runs yielded conflicting finite output bytes under identical frozen inputs.
 
 The changing host is a plausible contributor to these differences. But **AMD vs Intel, ISA, virtual machine, native library dispatch, and host configuration are not independently controlled**. It would be an invalid causal promotion to label any one of them the demonstrated cause.
@@ -58,7 +58,7 @@ The changing host is a plausible contributor to these differences. But **AMD vs 
 
 **Specification:** Freeze input bytes, physical runner and Python interpreter, change only the PyTorch wheel environment in an A1-B-A2 order, preserve raw mismatches and failures.
 
-**Implementation:** Two isolated Python 3.11 venvs, same library pins except Torch, call Sionna's public \`lmmse_equalizer\` and the independent represented-input mpmath oracle. The comparison script rejects differing fixture hashes or unexpected Python/Torch versions.
+**Implementation:** Two isolated Python 3.11 venvs, same library pins except Torch, call Sionna's public `lmmse_equalizer` and the independent represented-input mpmath oracle. The comparison script rejects differing fixture hashes or unexpected Python/Torch versions.
 
 **Test:** All 36 states per stage, bytewise output hashes, separate symbol-estimate and effective-noise errors, Cholesky statuses and recomputed transport hashes. No latency benchmark and no RF evaluation.
 
