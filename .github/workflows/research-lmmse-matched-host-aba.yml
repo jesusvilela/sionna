@@ -1,0 +1,97 @@
+name: Research LMMSE matched-host A-B-A replay
+
+on:
+  push:
+    branches:
+      - research/lmmse-matched-host-aba-2026-11-17
+    paths:
+      - research/experiments/compare_lmmse_matched_host.py
+      - research/experiments/replay_lmmse_cases.py
+      - research/fixtures/lmmse_tensor_replay_v1.json
+      - .github/workflows/research-lmmse-matched-host-aba.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  aba:
+    name: A-B-A single GitHub VM, Torch 2.9.1 -> 2.10.0 -> 2.9.1
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: src:research/experiments
+      SIONNA_DEVICE: cpu
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_DYNAMIC: FALSE
+      OMP_DYNAMIC: FALSE
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Create isolated Torch 2.9.1 environment
+        run: |
+          python -m venv .venv311
+          .venv311/bin/python -m pip install --disable-pip-version-check --no-cache-dir \
+            torch==2.9.1 --index-url https://download.pytorch.org/whl/cpu
+          .venv311/bin/python -m pip install --disable-pip-version-check --no-cache-dir \
+            "numpy==2.3.5" "scipy==1.16.3" "h5py==3.15.1" \
+            "matplotlib==3.10.8" "importlib-resources==6.5.2" \
+            "mpmath==1.3.0"
+      - name: Install Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Create isolated Torch 2.10.0 environment
+        run: |
+          python -m venv .venv313
+          .venv313/bin/python -m pip install --disable-pip-version-check --no-cache-dir \
+            torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu
+          .venv313/bin/python -m pip install --disable-pip-version-check --no-cache-dir \
+            "numpy==2.3.5" "scipy==1.16.3" "h5py==3.15.1" \
+            "matplotlib==3.10.8" "importlib-resources==6.5.2" \
+            "mpmath==1.3.0"
+      - name: Freeze host identity and numerical backend metadata
+        run: |
+          mkdir -p research/results/aba
+          git rev-parse HEAD > research/results/aba/source_commit.txt
+          uname -a > research/results/aba/uname.txt
+          lscpu > research/results/aba/lscpu.txt
+          lscpu -J > research/results/aba/lscpu.json
+          sha256sum /proc/cpuinfo > research/results/aba/cpuinfo_sha256.txt
+          grep -m 1 'model name' /proc/cpuinfo > research/results/aba/cpu_model.txt || true
+          .venv311/bin/python -c 'import torch, numpy, scipy, mpmath, sys; print(sys.version, torch.__version__, numpy.__version__, scipy.__version__, mpmath.__version__, torch.backends.cpu.get_cpu_capability()); print(torch.__config__.show())' > research/results/aba/backend_311.txt
+          .venv313/bin/python -c 'import torch, numpy, scipy, mpmath, sys; print(sys.version, torch.__version__, numpy.__version__, scipy.__version__, mpmath.__version__, torch.backends.cpu.get_cpu_capability()); print(torch.__config__.show())' > research/results/aba/backend_313.txt
+          cat research/results/aba/cpu_model.txt
+          cat research/results/aba/backend_311.txt
+          cat research/results/aba/backend_313.txt
+      - name: Run A1 -> B -> A2 without changing physical VM
+        run: |
+          .venv311/bin/python research/experiments/replay_lmmse_cases.py \
+            --fixtures research/fixtures/lmmse_tensor_replay_v1.json \
+            --output research/results/aba/a1.json --repeats 3
+          .venv313/bin/python research/experiments/replay_lmmse_cases.py \
+            --fixtures research/fixtures/lmmse_tensor_replay_v1.json \
+            --output research/results/aba/b.json --repeats 3
+          .venv311/bin/python research/experiments/replay_lmmse_cases.py \
+            --fixtures research/fixtures/lmmse_tensor_replay_v1.json \
+            --output research/results/aba/a2.json --repeats 3
+      - name: Compare matched-host raw output and failure states
+        run: |
+          .venv311/bin/python research/experiments/compare_lmmse_matched_host.py \
+            --a1 research/results/aba/a1.json \
+            --b research/results/aba/b.json \
+            --a2 research/results/aba/a2.json \
+            --output research/results/aba/comparison.json
+      - name: Preserve all source, host, and raw output evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lmmse-single-host-aba-evidence
+          path: research/results/aba
+          if-no-files-found: warn
+          retention-days: 30
