@@ -211,6 +211,23 @@ def main():
             }
             for r in rows
         },
+        "recomputed_transport": {
+            case["id"]: {
+                "bytes_equal_to_frozen": next(
+                    r["recomputed_transport_bytes_equal"]
+                    for r in rows if r["id"] == case["id"]
+                ),
+                "max_abs_difference": next(
+                    r["recomputed_transport_max_abs"]
+                    for r in rows if r["id"] == case["id"]
+                ),
+                "recomputed_sha256": next(
+                    r["recomputed_transport_sha256"]
+                    for r in rows if r["id"] == case["id"]
+                ),
+            }
+            for case in fixtures["cases"]
+        },
     }
     report = {
         "protocol": {
