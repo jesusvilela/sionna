@@ -1,0 +1,45 @@
+name: Freeze LMMSE byte-identical witness fixtures
+
+on:
+  push:
+    branches:
+      - research/lmmse-frozen-input-replay-2026-11-17
+    paths:
+      - research/experiments/freeze_lmmse_cases.py
+      - .github/workflows/research-freeze-lmmse.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  freeze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONPATH: src:research/experiments
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      SIONNA_DEVICE: cpu
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install pinned producer and Sionna numerical imports
+        run: |
+          python -m pip install --disable-pip-version-check --no-cache-dir \
+            torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install --disable-pip-version-check --no-cache-dir \
+            "numpy>=2.2.6" "scipy>=1.15.3" "h5py>=3.15.1" \
+            "matplotlib>=3.10.8" "importlib-resources>=6.5.2" mpmath
+      - name: Emit exact historical-case tensor bytes
+        run: |
+          git rev-parse HEAD
+          python research/experiments/freeze_lmmse_cases.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: one-time-lmmse-serialized-fixtures
+          path: research/results/frozen_input_producer.json
+          retention-days: 30
