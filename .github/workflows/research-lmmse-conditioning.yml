@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - research/lmmse-conditioning-audit-2026-11-17
+    paths:
+      - research/experiments/lmmse_conditioning_sweep.py
+      - research/tests/test_lmmse_receiver_frame.py
+      - .github/workflows/research-lmmse-conditioning.yml
   workflow_dispatch:
 
 permissions:
