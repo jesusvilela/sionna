@@ -247,6 +247,36 @@ def main():
         "safe_rows": len(safe_rows),
         "safe_gate_failed_rows": len(safe_failed),
         "failed_rows": len(failures),
+        "failed_rows_detail": [
+            {k: r.get(k) for k in (
+                "precision", "dim", "kappa_s", "kappa_w", "seed",
+                "whiten_interference", "state", "exception",
+                "base_input_diagnostics", "transport_input_diagnostics")}
+            for r in failures[:20]
+        ],
+        "unsafe_out_of_tolerance_rows": sum(
+            1 for r in good_rows if not r["safe_gate"]
+            and (
+                r["original_solver_error"]["max_tolerance_ratio"] > 1
+                or r["transported_solver_error"]["max_tolerance_ratio"] > 1
+                or r["end_to_end_frame_error"]["max_tolerance_ratio"] > 1
+            )
+        ),
+        "safe_worst_tolerance_ratio_by_precision": {
+            precision: max(
+                (
+                    max(
+                        r["original_solver_error"]["max_tolerance_ratio"],
+                        r["transported_solver_error"]["max_tolerance_ratio"],
+                        r["end_to_end_frame_error"]["max_tolerance_ratio"]
+                    )
+                    for r in safe_rows
+                    if r["state"] == "ok" and r["precision"] == precision
+                ),
+                default=None
+            )
+            for precision in PRECISIONS
+        },
         "safe_acceptance": (
             "max per-component error <= 2e-4(single) or 2e-11(double) "
             "times (1+abs(reference)); for original, transported, "
