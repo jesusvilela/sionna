@@ -1,0 +1,243 @@
+{
+  "task_id": "sionna-lmmse-frozen-replay-2026-11-17",
+  "claim": {
+    "text": "Fixing exact represented complex input tensors isolates cross-runtime solver reproducibility from version-sensitive random/QR input generation in Sionna LMMSE conditioning tests.",
+    "scope": "Six frozen synthetic source/transported complex tensor cases, two CPU PyTorch runtimes, two whitening modes, three repeats.",
+    "status_before": "H",
+    "assumptions": [
+      "little-endian IEEE754 complex64/complex128 tensor layout",
+      "same Sionna implementation and exact serialized input bits",
+      "CPU torch single-thread run",
+      "conditions selected from historical deterministic generator"
+    ],
+    "forbidden_promotions": [
+      "Do not infer general reproducibility on arbitrary CPUs or GPUs",
+      "Do not attribute historical run variation uniquely to PyTorch version",
+      "Do not infer physical 6G sensitivity or BER/SER changes",
+      "Do not turn malformed finite-precision covariance tensors into counterexamples to an exact SPD theorem"
+    ]
+  },
+  "specification": {
+    "intended_object": "Byte-identical original (y,H,S), transported (y',H',S'), and W tensors in a linear Gaussian LMMSE model.",
+    "invariants": [
+      "SHA256 of every serialized input tensor matches fixture entry",
+      "Same fixture SHA256 across both runtimes",
+      "Within-runtime output bytes stable across three repeats per fixture/mode",
+      "Exact algebraic posterior invariance conditional on SPD and invertible transform"
+    ],
+    "known_answer_cases": [
+      "single precision 2x2 moderate condition source and transport",
+      "double precision 2x2 moderate condition source and transport",
+      "single precision 2x2/4x4 historical Cholesky-problem cases",
+      "double precision 2x2 extreme conditioning"
+    ]
+  },
+  "implementation": {
+    "artifact": "research/experiments/replay_lmmse_cases.py; research/fixtures/lmmse_tensor_replay_v1.json",
+    "commit": "6516e479cd5a604752e8bad7870c161f7a59fb8e",
+    "environment": "GitHub-hosted Linux x86_64 CPU, Python 3.11 / Torch 2.9.1 and Python 3.13 / Torch 2.10.0; mpmath 100 digits",
+    "live_entrypoint": "python research/experiments/replay_lmmse_cases.py --fixtures research/fixtures/lmmse_tensor_replay_v1.json --output ... --repeats 3",
+    "representation": "Committed JSON with raw_le_hex complex numpy array bytes, per-tensor SHA256, shape, dtype; producer Python 3.13.18 Torch 2.10.0+cpu"
+  },
+  "metric": {
+    "name": "Typed tuple (input_sha_match, finite_state, within_runtime_output_sha_match, cross_version_output_sha_match, cholesky_info, high_precision_error, frame_oracle_drift)",
+    "type": "typed_tuple",
+    "units": "SHA equality boolean; Cholesky info integer; error complex LMMSE estimate or effective-noise variance",
+    "direction": "two_sided",
+    "raw_before_clipping": true,
+    "semantic_invariance_claimed": true,
+    "equivalence_attacks": [
+      "Freeze real and imaginary bytes rather than regenerate QR/random fixtures",
+      "Replay exact original and transported inputs rather than recomputing transport",
+      "Compare whitening False and True",
+      "Compare 3.11/2.9.1 vs 3.13/2.10.0 and repeat thrice each",
+      "Record recomputed WSW* mismatch separately from frozen input"
+    ]
+  },
+  "tests": {
+    "black_box": [
+      "Sionna public lmmse_equalizer outputs and nonfinite failure state for each frozen case/mode"
+    ],
+    "structural": [
+      "Exact per-tensor SHA256 guards, explicit dtype and shape, strict endian and total file digest"
+    ],
+    "property_based": [
+      "not applicable: deliberately replace stochastic generation with six immutable selected cases"
+    ],
+    "metamorphic": [
+      "Independent source and transported inputs under coherent receiver-frame change",
+      "Two whitening implementation paths, with and without Cholesky"
+    ],
+    "fuzzing": [
+      "not applicable: bounded replay of historical inputs, not discovery of new cases"
+    ],
+    "historical": [
+      "Previously observed single precision 2x2/4x4 high-condition cases and original safe-region LMMSE test"
+    ]
+  },
+  "controls": {
+    "matched_baselines": [
+      "Same committed fixture and Sionna code on two CPU Torch runtimes",
+      "moderate-condition source/transport controls against 100-digit oracle"
+    ],
+    "negative_controls": [
+      "Three previously Cholesky-problem single precision high-condition transformations: expect raw failures to be reported, not suppressed"
+    ],
+    "compute_parity": "Both jobs use single CPU thread, three repeated passes of identical input tensors; no performance comparison",
+    "parameter_parity": "Same six cases, whitening settings, array shapes and dtypes",
+    "sampling_parity": "No sampling during replay; all fixture bytes checked with SHA256",
+    "data_access_parity": "Both jobs read the same committed repository JSON fixture; no external runtime data"
+  },
+  "preregistration": {
+    "prediction": "Moderate controls remain within tolerances; fixed extreme failure classifications should reproduce across CPU versions if prior drift came from generated inputs",
+    "primary_metric": "Exact fixture digest and per-tensor hash identity followed by stability of output/failure classification by fixture and whitening mode",
+    "uncertainty_method": "Deterministic three-repeat observations on two hosted CPU environments; no population-level confidence bounds or cross-platform probability claim",
+    "kill_condition": "If fixture SHA or any tensor digest differs across jobs, cross-runtime comparisons are invalid; if moderate safe controls fail, retire the numerical-safe-region claim",
+    "stop_condition": "After frozen replay and documentation, no further upstream modification absent maintainer request or supported receiver trace",
+    "promotion_rule": "Promote only the narrow measured claim of repeatable tested fixture outcomes; do not claim solver version equivalence generally"
+  },
+  "evidence": {
+    "primary_sources": [
+      "research/fixtures/lmmse_tensor_replay_v1.json",
+      "research/experiments/replay_lmmse_cases.py",
+      "research/experiments/freeze_lmmse_cases.py",
+      "research/experiments/lmmse_conditioning_sweep.py"
+    ],
+    "execution_records": [
+      "https://github.com/jesusvilela/sionna/actions/runs/44048404622",
+      "https://github.com/jesusvilela/sionna/actions/runs/44048790316",
+      "two raw JSON artifacts from replay run 44048790316"
+    ],
+    "independent_witnesses": [
+      {
+        "name": "100-digit mpmath actual-input posterior oracle",
+        "origin": "Different arithmetic backend and posterior calculation from Sionna/PyTorch lmmse_equalizer; same synthetic data provenance",
+        "artifact": "research/experiments/lmmse_conditioning_sweep.py::_posterior_oracle"
+      }
+    ],
+    "claim_to_artifact_map": [
+      "Fixture identity -> committed raw_le_hex and per-tensor SHA256 -> paired replay logs",
+      "Within-runtime repeatability -> three repeated raw output SHA256 tokens per fixture/mode",
+      "Cross-version byte identity -> matched hashes of finite output tokens from two Actions job logs",
+      "Finite/nonfinite outcome -> public Sionna LMMSE outputs, Cholesky info, raw replay JSON",
+      "Independent represented-input accuracy -> mpmath posterior reference"
+    ]
+  },
+  "round_trip": {
+    "edges": [
+      {
+        "from": "requirement",
+        "to": "formal specification",
+        "preserved": [
+          "separate input-generation drift from solver drift"
+        ],
+        "transformed": [
+          "version comparison becomes exact-byte comparison"
+        ],
+        "lost": [],
+        "remainder": [
+          "CPU hardware metadata incomplete"
+        ]
+      },
+      {
+        "from": "formal specification",
+        "to": "tensor representation",
+        "preserved": [
+          "precision, shape, original/transported coordinates"
+        ],
+        "transformed": [
+          "complex arrays to bytewise little-endian JSON"
+        ],
+        "lost": [],
+        "remainder": [
+          "frozen tensors do not represent physical RF channels"
+        ]
+      },
+      {
+        "from": "tensor representation",
+        "to": "implementation",
+        "preserved": [
+          "bits guarded with SHA256"
+        ],
+        "transformed": [
+          "numpy complex arrays to torch tensors"
+        ],
+        "lost": [],
+        "remainder": [
+          "only little-endian CPU tested"
+        ]
+      },
+      {
+        "from": "implementation",
+        "to": "tests",
+        "preserved": [
+          "both whitening paths, actual SPD diagnostic"
+        ],
+        "transformed": [
+          "typed failure state and output hash"
+        ],
+        "lost": [],
+        "remainder": [
+          "no GPU backend"
+        ]
+      },
+      {
+        "from": "tests",
+        "to": "measurement",
+        "preserved": [
+          "raw results and full replay logs"
+        ],
+        "transformed": [
+          "counts by fixture/mode/repetition"
+        ],
+        "lost": [],
+        "remainder": [
+          "artifact data retained for 30 days"
+        ]
+      },
+      {
+        "from": "measurement",
+        "to": "interpretation",
+        "preserved": [
+          "12 config states equal across versions; nine finite config outputs bit equal"
+        ],
+        "transformed": [
+          "six fixtures x two modes x three repeats"
+        ],
+        "lost": [],
+        "remainder": [
+          "not statistically representative"
+        ]
+      },
+      {
+        "from": "interpretation",
+        "to": "requirement",
+        "preserved": [
+          "exact inputs isolate solver replay from input generation"
+        ],
+        "transformed": [
+          "historical variation remains causally unresolved"
+        ],
+        "lost": [],
+        "remainder": [
+          "historical QR fixture bytes not archived per run"
+        ]
+      }
+    ]
+  },
+  "result": {
+    "observed": "Committed SHA256-equal fixture replayed in both versions. 12 fixture/mode outcomes match (9 finite, 3 nonfinite). All 9 finite original and transported outputs byte-identical across both versions. Each of 12 configuration outcomes stable for 3 repeats per version. Safe controls within tolerance; nonfinite extreme covariance Cholesky info indices 2,2,3.",
+    "effect_size": "18/18 finite original/transformed output hashes identical across runtime pairs; 3/3 nonfinite fixture/mode states match; per environment 12 safe repeated rows pass, nine extreme nonfinite rows, nine finite extreme out-of-tolerance rows.",
+    "uncertainty": "Deterministic selected inputs, two CPU runtimes, three repeats each; not a statistical population sample, no independent hardware reproduction.",
+    "status_after": "M",
+    "retired_claims": [
+      "Historical run-to-run failure-count variability necessarily reflects a PyTorch-version-dependent solver defect",
+      "A seeded random/QR fixture is equivalent to a byte-identical fixture across runtimes"
+    ],
+    "active_remainder": [
+      "The historical generator's exact original inputs were not archived; identify which generation or hardware step caused earlier variation only if operationally necessary",
+      "GPU/Inductor and real receiver workloads not tested",
+      "Check continuation after external upstream review, not before"
+    ]
+  }
+}
