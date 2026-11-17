@@ -1,0 +1,63 @@
+name: Research frozen-input LMMSE replay
+
+on:
+  push:
+    branches:
+      - research/lmmse-frozen-input-replay-2026-11-17
+    paths:
+      - research/experiments/replay_lmmse_cases.py
+      - research/fixtures/lmmse_tensor_replay_v1.json
+      - .github/workflows/research-lmmse-replay.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  replay:
+    name: Frozen replay (Python ${{ matrix.py }}, Torch ${{ matrix.torch }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - py: "3.11"
+            torch: "2.9.1"
+          - py: "3.13"
+            torch: "2.10.0"
+    env:
+      PYTHONPATH: src:research/experiments
+      SIONNA_DEVICE: cpu
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "${{ matrix.py }}"
+      - name: Install CPU numerical and 100-digit reference dependencies
+        run: |
+          python -m pip install --disable-pip-version-check --no-cache-dir \
+            torch==${{ matrix.torch }} --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install --disable-pip-version-check --no-cache-dir \
+            "numpy>=2.2.6" "scipy>=1.15.3" "h5py>=3.15.1" \
+            "matplotlib>=3.10.8" "importlib-resources>=6.5.2" mpmath pytest
+      - name: Exact fixture checksum and LMMSE replay
+        run: |
+          git rev-parse HEAD
+          python -m pytest research/tests/test_lmmse_receiver_frame.py -q
+          python research/experiments/replay_lmmse_cases.py \
+            --fixtures research/fixtures/lmmse_tensor_replay_v1.json \
+            --output research/results/frozen_replay_py_${{ matrix.py }}.json \
+            --repeats 3
+      - name: Preserve raw replay and per-tensor hashes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frozen-lmmse-replay-python-${{ matrix.py }}
+          path: research/results/frozen_replay_py_${{ matrix.py }}.json
+          if-no-files-found: warn
+          retention-days: 30
