@@ -1,0 +1,229 @@
+{
+  "task_id": "sionna-lmmse-python311-torch-aba-2026-11-17",
+  "claim": {
+    "text": "Holding Python 3.11, one CPU runner, and exact serialized LMMSE inputs fixed, PyTorch 2.9.1 and 2.10.0 agree byte-for-byte on the tested finite outputs.",
+    "scope": "One AMD EPYC 7763 AVX2 GitHub VM, 6 selected synthetic fixtures, 2 whitening modes, 3 repeats each, Python 3.11.18 throughout; no GPU or physical RF data.",
+    "status_before": "H",
+    "assumptions": [
+      "One GitHub VM within all A-B-A stages",
+      "SHA256-verified frozen original and transformed complex tensors",
+      "Identical Python 3.11 interpreter build and non-Torch dependency versions",
+      "Sionna public LMMSE code and one CPU thread",
+      "High-condition cases are stress inputs, not representative RF"
+    ],
+    "forbidden_promotions": [
+      "No global hardware/output bitwise portability assertion",
+      "No real 6G BER/SER, throughput or sensitivity implication",
+      "No inference that AVX2 vs AVX512 alone caused earlier differences",
+      "No inference that matched solver bits imply oracle accuracy"
+    ]
+  },
+  "specification": {
+    "intended_object": "Raw complex original/transformed y,H,S matrices and W, loaded from a common immutable JSON fixture.",
+    "invariants": [
+      "All input SHA-256 fingerprints identical in A1/B/A2",
+      "Python minor and patch equal in all three stages",
+      "Same-stage threefold repeatability and A1-A2 restoration",
+      "Compare finite output bytes, failure classifications and Cholesky info without discarding failures",
+      "Independent represented-input posterior oracle checked for numerical accuracy"
+    ],
+    "known_answer_cases": [
+      "Moderate complex64 2x2 control with cov cond 30 frame cond 3",
+      "Moderate complex128 2x2 control with cov cond 30 frame cond 3",
+      "Three extreme complex64 covariance transport cases with Cholesky failures",
+      "One extreme complex128 covariance case"
+    ]
+  },
+  "implementation": {
+    "artifact": "research/experiments/compare_lmmse_matched_host.py and .github/workflows/research-lmmse-python311-only-aba.yml",
+    "commit": "a3b72845fb6e8fe3d804b2e74873d1381208d233",
+    "environment": "Single GitHub ubuntu-latest job on AMD EPYC 7763; AVX2; Python 3.11.18 each stage; Torch2.9.1+cpu/Torch2.10.0+cpu; both MKL2024.2 and oneDNN3.7.1; pinned identical NumPy2.3.5 SciPy1.16.3 mpmath1.3.0.",
+    "live_entrypoint": ".venv_a/bin/python replay_lmmse_cases.py -> .venv_b/bin/python replay_lmmse_cases.py -> .venv_a/bin/python replay_lmmse_cases.py -> compare_lmmse_matched_host.py",
+    "representation": "Little-endian complex64/complex128 tensor raw_le_hex with shape/dtype/SHA-256, typed raw outputs and SHA-256, Cholesky info, 100-digit mpmath oracle."
+  },
+  "metric": {
+    "name": "Typed tuple (input bytes equality, output byte hashes, finite/nonfinite status, Cholesky info, complex estimate difference, real effective-noise variance difference, actual-input high precision error, recomputed transport hash)",
+    "type": "typed_tuple",
+    "units": "Boolean equality; complex symbol units; effective-noise variance units; Cholesky info integers",
+    "direction": "two_sided",
+    "raw_before_clipping": true,
+    "semantic_invariance_claimed": true,
+    "equivalence_attacks": [
+      "A1-B-A2 version reversal under one Python interpreter",
+      "Frozen precomputed covariance used as solver input; WSW^H recomputed only for diagnostics",
+      "Compare all nine distinct finite fixture/mode combinations and 3 repeated outputs without counting them as independent"
+    ]
+  },
+  "tests": {
+    "black_box": [
+      "Sionna public lmmse_equalizer on original and transported covariance"
+    ],
+    "structural": [
+      "Per tensor SHA256 and fixture SHA256 verified; Python/Torch exact version guards; 36 rows/stage"
+    ],
+    "property_based": [
+      "not applicable: preselected frozen witness cases; broad conditioning sweep already archived"
+    ],
+    "metamorphic": [
+      "A1 and A2 same-version return control",
+      "Coherent source to transformed receiver-frame test on frozen model"
+    ],
+    "fuzzing": [
+      "not applicable: fixed byte replay intentionally removes random generation"
+    ],
+    "historical": [
+      "Previous Intel Xeon AVX512 one-host A-B-A experiment 44054491046",
+      "Separate-host replay experiments 44048790316 and 44049760075"
+    ]
+  },
+  "controls": {
+    "matched_baselines": [
+      "A1 and A2 use Python3.11/Torch2.9.1 same virtualenv and runner",
+      "Moderately conditioned original and transformed matrices versus mpmath reference"
+    ],
+    "negative_controls": [
+      "Known high-condition represented covariances with nonzero Cholesky info",
+      "Finite extreme cases that are bitwise equal across Torch versions yet fail oracle tolerance"
+    ],
+    "compute_parity": "Identical six cases, 2 modes, 3 repeats per stage, one CPU thread; no runtime benchmark or compute-speed claim",
+    "parameter_parity": "Same model code, floating precision, shape and serialized tensor bytes; only Torch wheel changes",
+    "sampling_parity": "No sampling inside replay, immutable source and transformed input bytes",
+    "data_access_parity": "All stages read same checked-out frozen fixture file; per-tensor SHA256 enforced"
+  },
+  "preregistration": {
+    "prediction": "Changing Torch release under a fixed Python/host does not necessarily alter LMMSE result bits; A1 and A2 must agree for repeatability.",
+    "primary_metric": "Fraction of finite original+transformed output pairs byte-identical and fraction of matching failure classifications in A1-B/B-A2/A1-A2.",
+    "uncertainty_method": "Exact repeated comparisons on six purposive fixtures on one GitHub CPU, no population confidence interval or independent RF measurement.",
+    "kill_condition": "Any fixture hash mismatch, Python mismatch or A1-vs-A2 instability invalidates an inference from version switch; safe case oracle failure retires safe-accuracy claim.",
+    "stop_condition": "No further synthetic expansion without upstream reviewer need or a real supported receiver trace.",
+    "promotion_rule": "Promote only measured equality for frozen inputs under this CPU/Python stack; do not claim cross-platform causality or improved PHY performance."
+  },
+  "evidence": {
+    "primary_sources": [
+      "https://github.com/jesusvilela/sionna/blob/research/lmmse-python311-only-aba-2026-11-17/research/experiments/compare_lmmse_matched_host.py",
+      "https://github.com/jesusvilela/sionna/blob/research/lmmse-python311-only-aba-2026-11-17/research/fixtures/lmmse_tensor_replay_v1.json"
+    ],
+    "execution_records": [
+      "https://github.com/jesusvilela/sionna/actions/runs/44064419391",
+      "GitHub Actions artifact lmmse-python311-fixed-aba-evidence: A1,B,A2 JSON, comparison, lscpu, cpu flags"
+    ],
+    "independent_witnesses": [
+      {
+        "name": "100-digit mpmath represented-input posterior oracle",
+        "origin": "Different arithmetic backend and posterior calculation from Sionna/PyTorch; shares synthetic tensor provenance",
+        "artifact": "research/experiments/lmmse_conditioning_sweep.py::_posterior_oracle"
+      }
+    ],
+    "claim_to_artifact_map": [
+      "Input identity -> frozen fixture and SHA checks -> A1/B/A2 JSON",
+      "Exact output matching -> 27/27 finite repeated-row hashes across each pair",
+      "Failure identity -> 36/36 states and Cholesky statuses",
+      "Numerical correctness -> mpmath oracle: all safe pass; 9 finite extreme repeated rows outside tolerance",
+      "Host/control provenance -> lscpu, backend_a.txt/backend_b.txt"
+    ]
+  },
+  "round_trip": {
+    "edges": [
+      {
+        "from": "requirement",
+        "to": "formal object",
+        "preserved": [
+          "Isolate PyTorch release as remaining version variable"
+        ],
+        "transformed": [
+          "Same-Python A1/B/A2 design"
+        ],
+        "lost": [],
+        "remainder": [
+          "PyTorch native wheel dependencies not identical"
+        ]
+      },
+      {
+        "from": "formal object",
+        "to": "implementation",
+        "preserved": [
+          "Exact frozen source/transformed typed matrices"
+        ],
+        "transformed": [
+          "Two Python3.11 virtualenvs on one runner"
+        ],
+        "lost": [],
+        "remainder": [
+          "Single host and purposive fixtures"
+        ]
+      },
+      {
+        "from": "implementation",
+        "to": "test",
+        "preserved": [
+          "All finite outputs and nonfinite classifications"
+        ],
+        "transformed": [
+          "SHA pair comparison and mpmath reference"
+        ],
+        "lost": [],
+        "remainder": [
+          "Finite equality is not numerical accuracy"
+        ]
+      },
+      {
+        "from": "test",
+        "to": "measurement",
+        "preserved": [
+          "36 raw rows/stage including extreme failures"
+        ],
+        "transformed": [
+          "27 finite rows, 9 nonfinite rows; independent summary metrics"
+        ],
+        "lost": [],
+        "remainder": [
+          "Nine finite configurations replicated three times"
+        ]
+      },
+      {
+        "from": "measurement",
+        "to": "interpretation",
+        "preserved": [
+          "Zero paired finite numeric differences, safe controls pass"
+        ],
+        "transformed": [
+          "Narrow same-host equality claim"
+        ],
+        "lost": [],
+        "remainder": [
+          "Hardware/ISA causality unresolved, no physical measurement"
+        ]
+      },
+      {
+        "from": "interpretation",
+        "to": "requirement",
+        "preserved": [
+          "Python confound removed; no forced Torch-version bit discrepancy"
+        ],
+        "transformed": [
+          "Stop further speculation without upstream or deployment hinge"
+        ],
+        "lost": [],
+        "remainder": [
+          "Earlier separate-host difference still unexplained"
+        ]
+      }
+    ]
+  },
+  "result": {
+    "observed": "On AMD EPYC 7763 AVX2 single GitHub VM with Python3.11.18 fixed, Torch2.9.1->2.10.0->2.9.1 yielded 27/27 finite repeated rows byte-identical and 36/36 state+Cholesky matches in every pairwise comparison. All 12 moderate repeated rows/stage passed independent reference tolerance; 9 high-condition rows/stage nonfinite, 9 additional finite extreme rows out of oracle tolerance. Both Torch versions recomputed all six covariance arrays byte-identical to originally frozen sp on this host, in contrast to earlier Intel/AVX512 hosted run.",
+    "effect_size": "Zero paired finite estimate/variance absolute error; 27/27 finite repeated-row hash matches and 36/36 failure state matches in each of A1-B/B-A2/A1-A2.",
+    "uncertainty": "Single matched GitHub VM, six purposive synthetic inputs, nine finite configurations each repeated three times. No RF representativeness or independent hardware causal isolation.",
+    "status_after": "M",
+    "retired_claims": [
+      "A Python 3.13 interpreter is required for Torch2.10.0 to match Torch2.9.1 on these cases",
+      "Different PyTorch releases inevitably produce different LMMSE bits",
+      "Bytewise solver equality proves accuracy of extreme finite inputs"
+    ],
+    "active_remainder": [
+      "What host/ISA/kernel dispatch caused earlier separate-host numeric bit differences",
+      "No supported-device receiver trace or 6G relevance validation",
+      "Await NVIDIA feedback on PR #1208 and #82; stop expanding synthetic studies"
+    ]
+  }
+}
