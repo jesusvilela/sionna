@@ -1,7 +1,7 @@
 """Compare fixed-input LMMSE replays in an A-B-A sequence on one runner.
 
 A1: Python 3.11 / PyTorch 2.9.1.
-B:  Python 3.13 / PyTorch 2.10.0.
+B:  Python 3.11 / PyTorch 2.10.0 (same Python minor version).
 A2: Python 3.11 / PyTorch 2.9.1 again.
 
 No solver outputs are repaired, rounded, clipped or discarded. The complete
@@ -20,6 +20,7 @@ from pathlib import Path
 STAGES = ("a1", "b", "a2")
 TENSOR_ROLES = ("original_output", "transported_output")
 EXPECTED_VERSIONS = ("2.9.1", "2.10.0", "2.9.1")
+EXPECTED_PYTHON = "3.11"
 
 
 def _read(path: Path, expected_version: str) -> dict:
@@ -27,6 +28,8 @@ def _read(path: Path, expected_version: str) -> dict:
     data = json.loads(raw)
     if not data["protocol"]["torch"].startswith(expected_version):
         raise ValueError("Unexpected Torch version in " + str(path))
+    if not data["protocol"]["python"].startswith(EXPECTED_PYTHON):
+        raise ValueError("Unexpected Python version in " + str(path))
     if data["protocol"]["repeats"] != 3:
         raise ValueError("Expected three repeated frozen-input replays")
     if len(data["rows"]) != 36:
@@ -243,6 +246,9 @@ def main() -> None:
         "runtime_versions": {
             stage: value["protocol"]["torch"] for stage, value in data.items()
         },
+        "python_versions": {
+            stage: value["protocol"]["python"] for stage, value in data.items()
+        },
         "same_input_tensor_bytes": True,
         "a1_vs_a2_same_version_bitwise_stable": same_version_stable,
         "cross_version_causal_interpretation_allowed": (
@@ -256,10 +262,10 @@ def main() -> None:
             for key, comparison in comparisons.items()
         },
         "limitation": (
-            "Matched one GitHub VM controls its physical host, not "
-            "PyTorch wheel or bundled BLAS/LAPACK implementations. "
-            "Differences under stable A-B-A cannot identify a single "
-            "causal software component."
+            "Matched one GitHub VM and Python 3.11 controls the host "
+            "and interpreter minor version. PyTorch wheels may bundle "
+            "different numerical libraries or dispatch implementations. "
+            "No single underlying library can be causally isolated here."
         ),
     }
     result = {"summary": summary, "comparisons": comparisons}
