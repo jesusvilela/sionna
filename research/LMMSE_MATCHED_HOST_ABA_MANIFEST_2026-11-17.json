@@ -1,0 +1,244 @@
+{
+  "task_id": "sionna-lmmse-matched-host-aba-2026-11-17",
+  "claim": {
+    "text": "Byte-frozen LMMSE receiver inputs under PyTorch 2.9.1 and 2.10.0 can have matching outputs on one GitHub runner; software-version difference alone does not force differing bits.",
+    "scope": "One GitHub-hosted Intel Xeon Platinum 8573C VM, 6 synthetic fixtures, 2 whitening settings, 3 repeats each, A1=Python3.11/Torch2.9.1, B=Python3.13/Torch2.10, A2=A1.",
+    "status_before": "H",
+    "assumptions": [
+      "same running GitHub VM for all stages",
+      "frozen complex tensor bytes checked via SHA-256",
+      "one CPU thread, CPU-only Sionna LMMSE implementation",
+      "three repeated calls per fixture and mode",
+      "matched non-Torch Python numerical package versions"
+    ],
+    "forbidden_promotions": [
+      "Do not claim PyTorch2.9.1 and 2.10.0 bitwise identical on all hardware",
+      "Do not infer physical 6G receiver performance",
+      "Do not infer a causal CPU driver solely from run-to-run agreement",
+      "Do not claim PyTorch alone is isolated while Python versions also differ"
+    ]
+  },
+  "specification": {
+    "intended_object": "Exact original/transported LMMSE tensors y,H,S,yp,Hp,Sp and W; source and transformed solver output and Cholesky statuses",
+    "invariants": [
+      "input fixture digest identical in all stages",
+      "all tensor fingerprints identical",
+      "A1 and A2 same-version outputs stable on one VM",
+      "observe differences between A and B without clipping or discarded nonfinite states",
+      "independent 100-digit posterior oracle uses represented frozen inputs"
+    ],
+    "known_answer_cases": [
+      "2 moderate complex64/complex128 2x2 controls",
+      "3 extreme single-precision covariance fixtures",
+      "1 extreme complex128 fixture",
+      "negative Cholesky states 2,2,3 in extreme whitened cases"
+    ]
+  },
+  "implementation": {
+    "artifact": "research/experiments/compare_lmmse_matched_host.py and .github/workflows/research-lmmse-matched-host-aba.yml",
+    "commit": "a631ab88f70cffc4be7e67c3f861f618e34fd94b",
+    "environment": "GitHub ubuntu-latest one job, Xeon Platinum 8573C, AVX512, MKL 2024.2, oneDNN3.7.1, Python3.11/Torch2.9.1+cpu vs Python3.13/Torch2.10.0+cpu, pinned NumPy2.3.5 SciPy1.16.3 mpmath1.3.0",
+    "live_entrypoint": ".venv311/bin/python replay_lmmse_cases.py -> .venv313/bin/python replay_lmmse_cases.py -> .venv311/bin/python replay_lmmse_cases.py -> compare_lmmse_matched_host.py",
+    "representation": "Committed raw_le_hex complex tensor arrays, per-tensor SHA256, source frame+transported frame, typed failure results, original and transformed output SHA"
+  },
+  "metric": {
+    "name": "Typed tuple: matched input hashes, failure status, finite output byte hashes, raw errors in complex symbol estimate and effective noise variance, Cholesky status, reconstructed transport SHA",
+    "type": "typed_tuple",
+    "units": "SHA equality boolean; error in native complex estimate and real variance; Cholesky status integer",
+    "direction": "two_sided",
+    "raw_before_clipping": true,
+    "semantic_invariance_claimed": true,
+    "equivalence_attacks": [
+      "A1-B-A2 return-to-original program without runner change",
+      "Recompute WSW^H but keep solver inputs frozen",
+      "Compare independent mpmath posterior outputs",
+      "Report high-condition nonfinite cases without discarding them"
+    ]
+  },
+  "tests": {
+    "black_box": [
+      "Public lmmse_equalizer in two whitening modes on exact same fixture across Torch versions"
+    ],
+    "structural": [
+      "Cross-run SHA digest checks for fixtures and each tensor",
+      "Exactly 36 rows per stage, with failure/bitwise comparators",
+      "Document CPU model, Torch/MKL/oneDNN flags and package versions"
+    ],
+    "property_based": [
+      "not applicable: 6 preselected byte-frozen historical cases, purpose is exact replay not distribution exploration"
+    ],
+    "metamorphic": [
+      "A1-B-A2 version reversal on one VM",
+      "Original and transported covariance invariance under coherent receiver coordinate changes"
+    ],
+    "fuzzing": [
+      "not applicable: adversarial conditioning was already performed in previous experiments; frozen replay is the assigned object"
+    ],
+    "historical": [
+      "Earlier run 44048790316 9/9 finite pairs equal across separate hosts; run 44049760075 0/9 finite pairs equal across separate hosts"
+    ]
+  },
+  "controls": {
+    "matched_baselines": [
+      "A1 and A2 identical virtualenv Torch 2.9.1 on same GitHub VM",
+      "Safe medium condition fixture against high precision oracle"
+    ],
+    "negative_controls": [
+      "Preexisting extreme whitening covariance matrices with Cholesky info 2,2,3"
+    ],
+    "compute_parity": "Single VM, sequential calls, no throughput comparison; torch limited to one thread, equivalent number of repeated cases",
+    "parameter_parity": "Same raw tensor bytes, dimensions and whitening modes in all stages",
+    "sampling_parity": "No new random draws or QR generation, exact committed frozen fixture",
+    "data_access_parity": "All stages load same git checked-out fixture with SHA-256 guards"
+  },
+  "preregistration": {
+    "prediction": "If earlier discrepancies are driven by run environment rather than an unavoidable Torch-version shift, the A1-B-A2 finite outputs can match on one VM; A1=A2 should hold as the repeatability control",
+    "primary_metric": "Per fixture and repeat byte equality of raw finite output SHA (complex estimate and effective noise) with unchanged failure classification",
+    "uncertainty_method": "Exact deterministic comparisons on 6 selected cases x 2 modes x 3 repeats, one VM; no sampling confidence claim",
+    "kill_condition": "If A1 and A2 mismatch, version-only causal attribution is invalid. If input bytes mismatch, entire cross-version comparison is invalid",
+    "stop_condition": "Do not repeat without physical receiver defect or upstream maintainer request",
+    "promotion_rule": "Only the bounded measured same-host result is promoted; no universal PyTorch portability or RF performance claim"
+  },
+  "evidence": {
+    "primary_sources": [
+      "https://github.com/jesusvilela/sionna/blob/research/lmmse-matched-host-aba-2026-11-17/research/experiments/compare_lmmse_matched_host.py",
+      "https://github.com/jesusvilela/sionna/blob/research/lmmse-matched-host-aba-2026-11-17/research/fixtures/lmmse_tensor_replay_v1.json"
+    ],
+    "execution_records": [
+      "https://github.com/jesusvilela/sionna/actions/runs/44054491046",
+      "lmmse-single-host-aba-evidence GitHub Actions artifact: a1.json,b.json,a2.json,comparison.json,backend_311.txt,backend_313.txt,lscpu.txt"
+    ],
+    "independent_witnesses": [
+      {
+        "name": "100-digit mpmath represented-input posterior oracle",
+        "origin": "Distinct arbitrary precision arithmetic backend and posterior implementation; shares synthetic input data and GitHub host",
+        "artifact": "research/experiments/lmmse_conditioning_sweep.py::_posterior_oracle"
+      }
+    ],
+    "claim_to_artifact_map": [
+      "Raw byte inputs -> committed JSON fixture and per-tensor hashes -> comparison JSON",
+      "Finite outputs -> output SHA pairs -> A1/B/A2 raw comparisons",
+      "Failure classification -> raw replay state plus Cholesky info",
+      "Host parity -> lscpu and CPU build flags captured in Actions artifact",
+      "Exact mathematical invariance -> S'=WSW^H formal LMMSE posterior identity"
+    ]
+  },
+  "round_trip": {
+    "edges": [
+      {
+        "from": "requirement",
+        "to": "formalization",
+        "preserved": [
+          "identify whether version shift necessarily changes numeric outputs"
+        ],
+        "transformed": [
+          "use A1-B-A2 matched-host conditional test"
+        ],
+        "lost": [],
+        "remainder": [
+          "single host is not global hardware"
+        ]
+      },
+      {
+        "from": "formalization",
+        "to": "representation",
+        "preserved": [
+          "exact typed LMMSE input bytes"
+        ],
+        "transformed": [
+          "fixed little-endian JSON fixture"
+        ],
+        "lost": [],
+        "remainder": [
+          "synthetic not physical RF"
+        ]
+      },
+      {
+        "from": "representation",
+        "to": "implementation",
+        "preserved": [
+          "SHA-verified input bytes"
+        ],
+        "transformed": [
+          "complex numpy arrays to Torch tensors"
+        ],
+        "lost": [],
+        "remainder": [
+          "different Torch wheel and Python version together"
+        ]
+      },
+      {
+        "from": "implementation",
+        "to": "test",
+        "preserved": [
+          "all original and transported outputs, failure states"
+        ],
+        "transformed": [
+          "full A1/B/A2 replays and oracle diagnostics"
+        ],
+        "lost": [],
+        "remainder": [
+          "same underlying Torch-native MKL/oneDNN versions only at build metadata level"
+        ]
+      },
+      {
+        "from": "test",
+        "to": "measurement",
+        "preserved": [
+          "raw output and hashes plus cpu flags"
+        ],
+        "transformed": [
+          "typed comparison summary counts"
+        ],
+        "lost": [],
+        "remainder": [
+          "27 finite rows are repetitions of 9 configurations"
+        ]
+      },
+      {
+        "from": "measurement",
+        "to": "interpretation",
+        "preserved": [
+          "27/27 finite output byte matches, 36/36 states match, zero raw finite differences"
+        ],
+        "transformed": [
+          "narrow measured host-specific finding"
+        ],
+        "lost": [],
+        "remainder": [
+          "unmatched prior hosts still disagree"
+        ]
+      },
+      {
+        "from": "interpretation",
+        "to": "requirement",
+        "preserved": [
+          "PyTorch-version difference alone not a forced bit difference on tested host"
+        ],
+        "transformed": [
+          "narrowed causal inference and enforced stop rule"
+        ],
+        "lost": [],
+        "remainder": [
+          "cannot isolate Python versus Torch, or hardware dispatch causes"
+        ]
+      }
+    ]
+  },
+  "result": {
+    "observed": "On one Intel Xeon Platinum 8573C GitHub VM, A1-B-A2 across Python3.11/Torch2.9.1 and Python3.13/Torch2.10.0 gave exactly equal 27/27 finite repeated output pairs, 36/36 failure classifications and 36/36 Cholesky statuses in each pairwise comparison. Recomputed WSW^H bytes matched each other across both environments for all 36 comparisons but not the original frozen transported covariance bytes. All 12 moderate control repeated rows per stage pass.",
+    "effect_size": "Zero absolute finite LMMSE estimate difference and zero absolute effective noise variance difference in all 3 comparisons; 27/27 matching finite rows per comparison; 9/9 repeated nonfinite classifications per comparison.",
+    "uncertainty": "One VM, 6 purposively chosen fixtures, 2 whitening modes, 3 repetitions, no statistical confidence interval or representative channels. Python and Torch versions changed together; no cross-host replication of A-B-A.",
+    "status_after": "M",
+    "retired_claims": [
+      "PyTorch versions alone necessarily cause different LMMSE bits on any CPU",
+      "Seeded random fixture generation is sufficient for cross-runtime bit equality",
+      "Input byte identity by itself ensures output bit identity on arbitrary hosted CPUs"
+    ],
+    "active_remainder": [
+      "Which CPU architecture or dispatch differences produced separate-host bit mismatches remains unknown",
+      "Physical RF receiver relevance not measured",
+      "Stop until supported-device defect or maintainer review requires work"
+    ]
+  }
+}
