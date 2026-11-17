@@ -1,0 +1,452 @@
+{
+  "header": {
+    "dtype_storage": "complex NumPy C-contiguous interleaved little-endian",
+    "generator": "research/experiments/lmmse_conditioning_sweep.py::_case",
+    "platform": "x86_64",
+    "provenance": "one-time PyTorch QR/randn producer, NOT independent RF data",
+    "python": "3.13.18",
+    "schema": "lmmse-replay-v1",
+    "selected_cases": 6,
+    "torch": "2.10.0+cpu"
+  },
+  "cases": [
+    {
+      "id": "safe_float32_2x2",
+      "parameters": {
+        "dim": 2,
+        "kappa_s": 30,
+        "kappa_w": 3,
+        "precision": "single",
+        "seed": 0
+      },
+      "tensors": {
+        "h": {
+          "dtype": "complex64",
+          "raw_le_hex": "16dd33beac205dbe53ba093e16283c3ebc90abbdfbc0913de935083f5b4a2d3d",
+          "sha256": "d30d0d86561e059b7bf859e8f90fcaf0aead74b8a3050d1889f0c3572393744d",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "hp": {
+          "dtype": "complex64",
+          "raw_le_hex": "e25c8ebd00dfc5baa10ff33e2aa6da3d42c9a33d4ce922bd980ea93cd45dbd3d",
+          "sha256": "fbac2182b83579a7d874658e677c6e9fe90fdecdbf1e388ebfaa5b4b76d3c5e9",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "s": {
+          "dtype": "complex64",
+          "raw_le_hex": "c16be33e00000000c663d53e96646fbec663d53e96646f3ea8d2163f00000000",
+          "sha256": "6277054c2fb3fd56970e8fd14df26eae952e729b65d1f6def315dc548c1ebdc4",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "sp": {
+          "dtype": "complex64",
+          "raw_le_hex": "fd20363f00000032202c5a3e258e83be202c5a3e258e833e68b1253e00000000",
+          "sha256": "4a600e0b9ccace07973059edcc2113899dd5a0d398197c8a61caceb407583fbe",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "w": {
+          "dtype": "complex64",
+          "raw_le_hex": "3341213e37d02e3e78ee693fa680f93cfe09d8bdf119cb3eb6e4563e16f9be3d",
+          "sha256": "a8c0eb1dabe57faeb0454f05d7327aab5da9ae01e3d8b73d670b87e3f316b91d",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "y": {
+          "dtype": "complex64",
+          "raw_le_hex": "a98327be5a343fbeeaadb0beb0e6b23e",
+          "sha256": "b345828a00867ee8cf0b2344effd8a32da038056a2345ed530c02d13c1fd8d81",
+          "shape": [
+            2
+          ]
+        },
+        "yp": {
+          "dtype": "complex64",
+          "raw_le_hex": "2cc4a3be82be803e980460bca89484bb",
+          "sha256": "33ed0fb9c05dd580dc842cf3b17c1fae7a55ed9b3b0b212ca7d9aebcd00fb02a",
+          "shape": [
+            2
+          ]
+        }
+      }
+    },
+    {
+      "id": "failure_float32_2x2_w30",
+      "parameters": {
+        "dim": 2,
+        "kappa_s": 1000000,
+        "kappa_w": 30,
+        "precision": "single",
+        "seed": 1
+      },
+      "tensors": {
+        "h": {
+          "dtype": "complex64",
+          "raw_le_hex": "e091203da23a623efa7ba83ee56dc2bd1f7919beeb1329be6f71b6be909f893b",
+          "sha256": "1e329c97d26651aa18ff1db34e99b2b0783990e5aff423726fbba191f814cac7",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "hp": {
+          "dtype": "complex64",
+          "raw_le_hex": "d549953d909c16bd680870bc37c018bea45902be305f63becec9e8beea69403d",
+          "sha256": "088af7aaed001ab375743b33febccfdd2d50dc7c6cbaee6244a641ff85a7bd5f",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "s": {
+          "dtype": "complex64",
+          "raw_le_hex": "eeb9053e000000008f22d4bd792aa4be8f22d4bd792aa43e95915e3f00000000",
+          "sha256": "4ca741d8746aa80b62e8c61637798a5dcb006bac5c5b53f046ec1f6c71cbb39d",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "sp": {
+          "dtype": "complex64",
+          "raw_le_hex": "12e6463d00000000f07c01bbc09a283e007d01bbbf9a28bee7f10e3f00000000",
+          "sha256": "f39925b03681de0f67620a2b768ac285208005e66e4418b48957361f1a506c9a",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "w": {
+          "dtype": "complex64",
+          "raw_le_hex": "2459893de7a233beac165b3d3c21753e4683f2be67881cbe19a74c3f31ae0cbe",
+          "sha256": "c4dab026370dc2435b7a890453a1df6984ede3efab9a7efda9418da43fdc547b",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "y": {
+          "dtype": "complex64",
+          "raw_le_hex": "22c805bef4d0df3e90f4a53d1735cfbe",
+          "sha256": "ff93d983fa31058c8205f264123a437471bc5f1d7f4da8522343acf976cf6177",
+          "shape": [
+            2
+          ]
+        },
+        "yp": {
+          "dtype": "complex64",
+          "raw_le_hex": "80322d3ebcbe4c3dc7310d3e1c9105bf",
+          "sha256": "ce72187290827c42cb0a01e0749bd5bafabe92d2d4aa8d5c2ef0c85c6e6c81ad",
+          "shape": [
+            2
+          ]
+        }
+      }
+    },
+    {
+      "id": "failure_float32_2x2_w300",
+      "parameters": {
+        "dim": 2,
+        "kappa_s": 1000000,
+        "kappa_w": 300,
+        "precision": "single",
+        "seed": 0
+      },
+      "tensors": {
+        "h": {
+          "dtype": "complex64",
+          "raw_le_hex": "ecd9483e66c2f13cd8ed01bde2e3b53d64c7493eaf5f97be48a7783edf03e0be",
+          "sha256": "3972df4ebe5b4e43469c9f32ef5e2831323d73b3c23b105b1d0768c39f57aca9",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "hp": {
+          "dtype": "complex64",
+          "raw_le_hex": "2e6347be3a351abe2ffa9cbe14ff7ebe445a4a3e6067fdbb3939a23efc0e5ebb",
+          "sha256": "24cfce63b778d6960fa0cdd9e115a91ba1515196f7a15f3d972ce658cdabd378",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "s": {
+          "dtype": "complex64",
+          "raw_le_hex": "f1d75f3f0000000050f931bdad37a83e50f931bdad37a8be7da0003e00000000",
+          "sha256": "b373c733c79f97d3be4472bf551d97acc4366c62a7a00e1f3ab1b75fa04cc640",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "sp": {
+          "dtype": "complex64",
+          "raw_le_hex": "3439c23d0000000060a373bde2064abd5fa373bde0064a3d35f1803d00000000",
+          "sha256": "09b60ebb2ec61e15a418a8c9c38cb746358cade701583595c9781ffacb11a99f",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "w": {
+          "dtype": "complex64",
+          "raw_le_hex": "aeb3023c6157473e83be143eafc33dbf8ce0d2bd7ea1f5bd61a9943e38fd073f",
+          "sha256": "5dec2d7c2cb9e85c3942b6b41c35adbf6e99974b0007a030513bd5c5e570f9ce",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "y": {
+          "dtype": "complex64",
+          "raw_le_hex": "92ebc03d77268a3d56f4ed3e25393e3e",
+          "sha256": "185802f2cc4327417892a3f3e6d4363fcd19ab010d8b50cba985a6e40fcb0b78",
+          "shape": [
+            2
+          ]
+        },
+        "yp": {
+          "dtype": "complex64",
+          "raw_le_hex": "6075453e5ce898be7ef20d3db2ad903e",
+          "sha256": "1479fc35dea7907ae6e40b27f097fd21aabc3f3ac31b670ef6d65256ddfe929e",
+          "shape": [
+            2
+          ]
+        }
+      }
+    },
+    {
+      "id": "failure_float32_4x4_w300",
+      "parameters": {
+        "dim": 4,
+        "kappa_s": 1000000,
+        "kappa_w": 300,
+        "precision": "single",
+        "seed": 1
+      },
+      "tensors": {
+        "h": {
+          "dtype": "complex64",
+          "raw_le_hex": "6d2f6a3cdb09e8bd6dca053d6b3fc3be0f37343e2ba81bbeac57cf3d19f4843dac740f3ebb6c7bbbe6dcc33e587a47be6a2d133ecda089be6e82de3d03641cbe",
+          "sha256": "155bd09e2ce43ce71af32674639c33a3652ed5d92632a4b28d25e46385a3da0e",
+          "shape": [
+            4,
+            2
+          ]
+        },
+        "hp": {
+          "dtype": "complex64",
+          "raw_le_hex": "28cd203dc10fb2bd9cfb103dc830083c7e9718bda0a0a33d26f548bde80901bc059bfabcf5624d3df6657abcd826f5bb1e38f13cde35023d80e710ba03d5a43c",
+          "sha256": "e58397695a244a15b2ae066ec55fd6985d2bf12e34e842c7643ce12c57ddb612",
+          "shape": [
+            4,
+            2
+          ]
+        },
+        "s": {
+          "dtype": "complex64",
+          "raw_le_hex": "09e6093f000000000ae8313eb97280be1b6e60bdd8eb0f3dd4a5c33e068d313d0ae8313eb972803e37fd3c3e00000000118414bddd2588bca7c6d43db9f34a3e1b6e60bdd8eb0fbd118414bddd25883c49cb103c00000000af7e19bd4c3af8bcd4a5c33e068d31bda7c6d43db9f34abeaf7e19bd4c3af83cee5a8e3e00000000",
+          "sha256": "f0d10c8d837dc6867f5dae956ab247ada766b9a92431356c3e3c5e8e96a6a21f",
+          "shape": [
+            4,
+            4
+          ]
+        },
+        "sp": {
+          "dtype": "complex64",
+          "raw_le_hex": "ca877f3e00008030d6ef54be728ce3bc0f171bbe006de93be4e443bd5d63b1bdd7ef54be718ce33ca3b1343e0000c0afbc74003e8abfbabc369f4a3d9fee883d10171bbe026de9bbbb74003e8abfba3c1ab2bc3d00008030f274d93c1fed5c3de4e443bd5c63b13d359f4a3d9eee88bdf474d93c1eed5cbd73b9203d00000031",
+          "sha256": "6caf7326e0ec3a5e1f5435c1780000a8a615c17cb43b89bd1a9fa67bb9bf7079",
+          "shape": [
+            4,
+            4
+          ]
+        },
+        "w": {
+          "dtype": "complex64",
+          "raw_le_hex": "144ccd3e7206873d8b10563e2ef1e9bb3f8791be9eb7a33efcb3513e24a0eebaf41ba1be71c94abdf1a4cabda69d31bd7aba4b3e4969a8bea38f94be8820363d073d6dbe34b466bd253cabbda13bf1bc629b4f3e81aa3cbec03730be694e8ebcabdceabdc2b80b3eea2b84bd688dc43d783c69bdaa770abe80f4d93b65e1973d",
+          "sha256": "79986f29da4dbb53b9006742d667d326de7108dd22b4214234bccaffe40eb6a7",
+          "shape": [
+            4,
+            4
+          ]
+        },
+        "y": {
+          "dtype": "complex64",
+          "raw_le_hex": "1223833e060ad63d20781e3ebc0417bdaf11dc3d1330cc3e62bfb43ed8cc3b3d",
+          "sha256": "dea795cee30bd670d2c9cd1dd279a224b513edd99370245e12677473509053bc",
+          "shape": [
+            4
+          ]
+        },
+        "yp": {
+          "dtype": "complex64",
+          "raw_le_hex": "54e52c3d6007a6bc8e3b35bdc0a212bb5fc303bd5abfe23bceeb59bbbb2cf13c",
+          "sha256": "e0c3d43438ce72b8d6f22562c6467694ba414452e1dbf3c1e28564e9d42474ac",
+          "shape": [
+            4
+          ]
+        }
+      }
+    },
+    {
+      "id": "safe_float64_2x2",
+      "parameters": {
+        "dim": 2,
+        "kappa_s": 30,
+        "kappa_w": 3,
+        "precision": "double",
+        "seed": 0
+      },
+      "tensors": {
+        "h": {
+          "dtype": "complex128",
+          "raw_le_hex": "330276bca27bc6bfff15878e15a4cbbf5ed19d624a37c13f112f99cc0285c73ff18851881772b5bfffc556621f38b23fcc98ae17bd06e13fd15ddf654ba9a53f",
+          "sha256": "713867d630c638dc8dd6e61137b5c92844900bc6abc8b8e0f774171743563360",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "hp": {
+          "dtype": "complex128",
+          "raw_le_hex": "a509aa289ccbb1bf809ad278dfbb58bff5d0e715f461de3f71f8855fc554bb3fd8266b4d2879b43fe2032c8f295da4bff09cfe15d321953f1e59f778baabb73f",
+          "sha256": "eca44a5e957d654ed17c950d24da1eac313e6321e1b00d485b8d71bda2c13a6d",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "s": {
+          "dtype": "complex128",
+          "raw_le_hex": "2b843f2f786ddc3f00000000000000001f9c6bb478acda3fb3f62cb192eccdbf1f9c6bb478acda3fb3f62cb192eccd3f22824cfa54dae23f0000000000000000",
+          "sha256": "d09149cb57e21119e314672d154154540940f50ac764d133204bf331ea3c29d7",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "sp": {
+          "dtype": "complex128",
+          "raw_le_hex": "7d5b24bc1fc4e63f000000000000503cc71913ed8345cb3f083cb994c471d0bfc61913ed8345cb3f073cb994c471d03f1ce6f21b2db6c43f000000000000603c",
+          "sha256": "0f5a86b5866a68dc1e4068373b5f2bcbebb7e7a9d37162e40d35f5c31158c007",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "w": {
+          "dtype": "complex128",
+          "raw_le_hex": "e8a762582628c43f6f5f7adf06dac53fed85b908cf3ded3f06decfcb14309f3f9bdd0ec53f01bbbf0cec201c3e63d93feaf6eccb96dcca3f1e8950b222dfb73f",
+          "sha256": "364aab17d1294933d5e6f54bf614cb80867aa907e0dacd68b452fc46690ae4f8",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "y": {
+          "dtype": "complex128",
+          "raw_le_hex": "2f6746f774f0c4bf988910658be6c7bf3b12d934bd15d6bfa233b3d0d55cd63f",
+          "sha256": "6f68616f1367ba048f90ab2293c71109f2d4fdae39a7dd6b90b83164e1b3a0f7",
+          "shape": [
+            2
+          ]
+        },
+        "yp": {
+          "dtype": "complex128",
+          "raw_le_hex": "30fbd2848578d4bf0a625a0fd017d03ff8d3a56391008cbfb8097d0c939270bf",
+          "sha256": "631299ebd63c01a5370f2eeb3335ac810661d8e9acb2002832be596f2151ee92",
+          "shape": [
+            2
+          ]
+        }
+      }
+    },
+    {
+      "id": "extreme_float64_2x2_w300",
+      "parameters": {
+        "dim": 2,
+        "kappa_s": 1000000,
+        "kappa_w": 300,
+        "precision": "double",
+        "seed": 0
+      },
+      "tensors": {
+        "h": {
+          "dtype": "complex128",
+          "raw_le_hex": "aef5fe863d1bc93f9dd28fbd4c389e3f567616f3ba3da0bfb9fd543f7cbcb63ff5331f7bec38c93f9084c5dcf5ebd2bf00ae130ee914cf3f67aa46d17b00dcbf",
+          "sha256": "167fe3319bb461be72ec349c183602bd3cd7bdaa7441d4740f83929f2f44d43b",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "hp": {
+          "dtype": "complex128",
+          "raw_le_hex": "96f629b665ecc8bf5f39a016a746c3bff4da2ab9459fd3bf7bfeb275e2dfcfbf67cc1068484bc93fa4664e56ecac7fbfa63f98152747d43f78adc4ecdec16bbf",
+          "sha256": "9f3a9347dd4bba8a30f07ef9c407cd656af7191e4a81092c0948504e0d615f3c",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "s": {
+          "dtype": "complex128",
+          "raw_le_hex": "be7c702efefaeb3f000000000000000061b9c4ff293fa6bfcbfd2aa4f506d53f61b9c4ff293fa6bfcbfd2aa4f506d5bf70ddb9a90f14c03f0000000000000000",
+          "sha256": "badd4781593cdf4b984418071c9a20738817dafb6b89a0502b80c60fa97fad8a",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "sp": {
+          "dtype": "complex128",
+          "raw_le_hex": "379c6e9b2647b83f00000000000000008c99c7f86b74aebf12f83826dc40a9bf8d99c7f86b74aebf11f83826dc40a93fcd0937b2261eb03f0000000000000000",
+          "sha256": "7181e72b99d0f5e67bfdde69b006e4cb9a78535a334b6cdc1dbdfdb224c19e17",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "w": {
+          "dtype": "complex128",
+          "raw_le_hex": "d9c89bb67556803f4ac52326eceac83f04a78a55d097c23fb57d87dc75b8e7bf02a4b783115cbabf872320c32fb4bebfff93db152c95d23f8464beffa6ffe03f",
+          "sha256": "a1ff3f8f5f0f339d3c07aaa3b3fd8ef03a14b94f7de238e5531fbb399f038dcc",
+          "shape": [
+            2,
+            2
+          ]
+        },
+        "y": {
+          "dtype": "complex128",
+          "raw_le_hex": "3b72c215721db83f767a65f8ce44b13f95a814b18abedd3f9cead09724c7c73f",
+          "sha256": "f454b41989979b77eef30896dc535ab7c018e4ef68ef6ad2ce652bbcf0563624",
+          "shape": [
+            2
+          ]
+        },
+        "yp": {
+          "dtype": "complex128",
+          "raw_le_hex": "2810dadeabaec83f0907f0790b1dd3bf4f5d25a84fbea13f2e0c333ab615d23f",
+          "sha256": "be640b4b0f99ccd4d3b3f4b49915c37847e0a5f547cf9011f7cd6505a1def290",
+          "shape": [
+            2
+          ]
+        }
+      }
+    }
+  ]
+}
