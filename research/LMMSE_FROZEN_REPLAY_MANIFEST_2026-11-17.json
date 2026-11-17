@@ -34,13 +34,13 @@
   },
   "implementation": {
     "artifact": "research/experiments/replay_lmmse_cases.py; research/fixtures/lmmse_tensor_replay_v1.json",
-    "commit": "6516e479cd5a604752e8bad7870c161f7a59fb8e",
+    "commit": "e18f46a17d1bb3e334aac7ccb941fc4de7e36472",
     "environment": "GitHub-hosted Linux x86_64 CPU, Python 3.11 / Torch 2.9.1 and Python 3.13 / Torch 2.10.0; mpmath 100 digits",
     "live_entrypoint": "python research/experiments/replay_lmmse_cases.py --fixtures research/fixtures/lmmse_tensor_replay_v1.json --output ... --repeats 3",
     "representation": "Committed JSON with raw_le_hex complex numpy array bytes, per-tensor SHA256, shape, dtype; producer Python 3.13.18 Torch 2.10.0+cpu"
   },
   "metric": {
-    "name": "Typed tuple (input_sha_match, finite_state, within_runtime_output_sha_match, cross_version_output_sha_match, cholesky_info, high_precision_error, frame_oracle_drift)",
+    "name": "Typed tuple (input_sha_match, per-config solver finite_state, within_runtime_output_sha_match, cross_run_output_sha_match, covariance_reconstruction_byte_match, cholesky_info, 100-digit oracle error)",
     "type": "typed_tuple",
     "units": "SHA equality boolean; Cholesky info integer; error complex LMMSE estimate or effective-noise variance",
     "direction": "two_sided",
@@ -94,7 +94,7 @@
     "uncertainty_method": "Deterministic three-repeat observations on two hosted CPU environments; no population-level confidence bounds or cross-platform probability claim",
     "kill_condition": "If fixture SHA or any tensor digest differs across jobs, cross-runtime comparisons are invalid; if moderate safe controls fail, retire the numerical-safe-region claim",
     "stop_condition": "After frozen replay and documentation, no further upstream modification absent maintainer request or supported receiver trace",
-    "promotion_rule": "Promote only the narrow measured claim of repeatable tested fixture outcomes; do not claim solver version equivalence generally"
+    "promotion_rule": "Promote only stable failure classification and moderate-condition observed tolerance for six selected byte-frozen fixtures. Retire portable bitwise-output equality since second run contradicts it."
   },
   "evidence": {
     "primary_sources": [
@@ -106,7 +106,9 @@
     "execution_records": [
       "https://github.com/jesusvilela/sionna/actions/runs/44048404622",
       "https://github.com/jesusvilela/sionna/actions/runs/44048790316",
-      "two raw JSON artifacts from replay run 44048790316"
+      "two raw JSON artifacts from replay run 44048790316",
+      "https://github.com/jesusvilela/sionna/actions/runs/44049760075",
+      "two additional raw JSON artifacts from second replay run 44049760075"
     ],
     "independent_witnesses": [
       {
@@ -118,7 +120,7 @@
     "claim_to_artifact_map": [
       "Fixture identity -> committed raw_le_hex and per-tensor SHA256 -> paired replay logs",
       "Within-runtime repeatability -> three repeated raw output SHA256 tokens per fixture/mode",
-      "Cross-version byte identity -> matched hashes of finite output tokens from two Actions job logs",
+      "Cross-version and cross-run bitwise comparison -> matched SHA-256 tokens of the same nine finite output pairs from both replay runs",
       "Finite/nonfinite outcome -> public Sionna LMMSE outputs, Cholesky info, raw replay JSON",
       "Independent represented-input accuracy -> mpmath posterior reference"
     ]
@@ -199,14 +201,16 @@
         "from": "measurement",
         "to": "interpretation",
         "preserved": [
-          "12 config states equal across versions; nine finite config outputs bit equal"
+          "12/12 configuration failure classes agree across versions and runs",
+          "first run 9/9 finite output pairs byte-identical across versions; second run 0/9",
+          "Python3.13 outputs 9/9 bit stable across runs, Python3.11 0/9"
         ],
         "transformed": [
-          "six fixtures x two modes x three repeats"
+          "six fixtures x two modes x three repeats x two separate runs, two runtime versions"
         ],
         "lost": [],
         "remainder": [
-          "not statistically representative"
+          "variation in finite outputs under same input bytes demands CPU/library dispatch identification"
         ]
       },
       {
@@ -226,18 +230,20 @@
     ]
   },
   "result": {
-    "observed": "Committed SHA256-equal fixture replayed in both versions. 12 fixture/mode outcomes match (9 finite, 3 nonfinite). All 9 finite original and transported outputs byte-identical across both versions. Each of 12 configuration outcomes stable for 3 repeats per version. Safe controls within tolerance; nonfinite extreme covariance Cholesky info indices 2,2,3.",
-    "effect_size": "18/18 finite original/transformed output hashes identical across runtime pairs; 3/3 nonfinite fixture/mode states match; per environment 12 safe repeated rows pass, nine extreme nonfinite rows, nine finite extreme out-of-tolerance rows.",
-    "uncertainty": "Deterministic selected inputs, two CPU runtimes, three repeats each; not a statistical population sample, no independent hardware reproduction.",
+    "observed": "Frozen SHA-256-identical fixture replayed in two separate CI runs and both CPU PyTorch runtimes. All 12 fixture/mode failure classes match (nine finite, three nonfinite) with immediate threefold repeatability. First CI run: all nine finite original/transformed output pairs matched bytewise across versions; second: zero of nine matched. Between runs Python 3.13 kept 9/9 finite pairs bit-identical, whereas Python 3.11 changed 9/9. In the second run, recomputing W S W^H from frozen bytes matched the stored transported covariance for 6/6 cases in PyTorch2.10.0, zero of six in PyTorch2.9.1.",
+    "effect_size": "12/12 stable failure-class matches across versions and both runs; 9/9 then 0/9 finite output hash pairs equal across runtimes; 0/9 cross-run stable finite pair outputs in Python3.11, 9/9 in Python3.13. Each environment/run had 12/12 safe replay rows pass and 9 nonfinite extreme rows.",
+    "uncertainty": "Two independent hosted runner runs, two CPU runtime combinations, three in-process repetitions each, six selected synthetic fixtures. Exact host CPU model/ISA and BLAS dispatch not matched; no statistical or RF population generalization.",
     "status_after": "M",
     "retired_claims": [
       "Historical run-to-run failure-count variability necessarily reflects a PyTorch-version-dependent solver defect",
-      "A seeded random/QR fixture is equivalent to a byte-identical fixture across runtimes"
+      "A seeded random/QR fixture is equivalent to a byte-identical fixture across runtimes",
+      "Fixed represented input bytes guarantee bit-identical finite solver outputs across different hosted CPU runs",
+      "The earlier run variability can be attributed exclusively to non-identical QR-generated inputs"
     ],
     "active_remainder": [
-      "The historical generator's exact original inputs were not archived; identify which generation or hardware step caused earlier variation only if operationally necessary",
-      "GPU/Inductor and real receiver workloads not tested",
-      "Check continuation after external upstream review, not before"
+      "The two first/second replay runs differ in finite Python3.11 output bytes despite identical input fixture SHA; isolate processor model and CPU BLAS dispatch if operationally motivated",
+      "The historical generator's exact original inputs were not archived per run; cannot uniquely attribute its previous variation",
+      "Real-world receiver and GPU relevance not tested; stop absent upstream request"
     ]
   }
 }
