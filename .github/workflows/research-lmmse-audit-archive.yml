@@ -1,0 +1,32 @@
+name: Research LMMSE audit archive
+
+on:
+  push:
+    branches:
+      - research/lmmse-frozen-input-replay-2026-11-17
+    paths:
+      - .github/workflows/research-lmmse-audit-archive.yml
+      - research/LMMSE_FROZEN_REPLAY_MANIFEST_2026-11-17.json
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate manifest JSON syntax
+        run: |
+          python -m json.tool research/LMMSE_FROZEN_REPLAY_MANIFEST_2026-11-17.json > /dev/null
+          sha256sum research/LMMSE_FROZEN_REPLAY_MANIFEST_2026-11-17.json
+      - name: Preserve exact audited text for independent validator
+        uses: actions/upload-artifact@v4
+        with:
+          name: lmmse-audit-manifest-and-report
+          path: |
+            research/LMMSE_FROZEN_REPLAY_MANIFEST_2026-11-17.json
+            research/LMMSE_FROZEN_REPLAY_AUDIT_2026-11-17.md
+          retention-days: 30
